@@ -1,28 +1,30 @@
-"""
-URL configuration for sms_core project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-# sms_core/urls.py
-# sms_core/urls.py
 # sms_core/urls.py
 from django.contrib import admin
 from django.urls import path, include
-from finance.views import main_portal_home
+# Import the public website view function straight from the finance views file
+from finance.views import public_school_website 
+from django.contrib import admin
+from django.urls import path, include
+from finance.views import public_school_website 
+from django.core.exceptions import PermissionDenied
+from django.shortcuts import redirect
+from django.contrib import messages
 
 urlpatterns = [
-    path('', main_portal_home, name='portal_home'),
     path('admin/', admin.site.urls),
-    path('finance/', include('finance.urls')),
+    
+    # ◄ ROOT PATH: Your beautiful public landing page loads instantly here now
+    path('', public_school_website, name='public_home'),
+    
+    # Your internal management application ecosystem portals sub-routes
+   
+    
+     path('finance/', include('finance.urls')),
 ]
+
+# Custom view to catch unauthorized access attempts across the platform
+def custom_permission_denied_handler(request, exception=None):
+    messages.error(request, "Access Restricted! Your account does not have the necessary clearance level for that workstation.")
+    return redirect('public_home')
+
+handler403 = 'sms_core.urls.custom_permission_denied_handler'
