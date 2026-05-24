@@ -19,7 +19,7 @@ urlpatterns = [
     # Your internal management application ecosystem portals sub-routes
    
     
-     path('finance/', include('finance.urls')),
+     path('', include('finance.urls')),
 ]
 
 # Custom view to catch unauthorized access attempts across the platform

@@ -114,6 +114,9 @@ class FeeInvoice(models.Model):
         return f"Invoice - {self.student.last_name} (KES {self.amount})"
 
 class FeeReceipt(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='fee_receipts')
+    invoice = models.ForeignKey(FeeInvoice, on_delete=models.SET_NULL, null=True, blank=True)
+    # ... other fields ...
     STATUS_CHOICES = [('COMPLETED', 'Completed'), ('PENDING', 'Pending Verification'), ('FAILED', 'Failed')]
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='fee_receipts')
     invoice = models.ForeignKey(FeeInvoice, on_delete=models.SET_NULL, null=True, blank=True)
@@ -265,3 +268,51 @@ class AssetMaintenanceLog(models.Model):
 
     def __str__(self):
         return f"Fix Log: {self.asset.name} on {self.date_logged}"
+    
+# Append to the bottom of finance/models.py
+
+class LessonPlan(models.Model):
+    teacher = models.ForeignKey('StaffProfile', on_delete=models.CASCADE, limit_choices_to={'role_designation': 'TEACHER'})
+    subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
+    stream = models.ForeignKey('ClassStream', on_delete=models.CASCADE)
+    topic = models.CharField(max_length=150)
+    objectives = models.TextField(help_text="What will learners achieve by the end of this lesson?")
+    week_number = models.PositiveIntegerField(default=1)
+    date_planned = models.DateField()
+    is_approved = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Week {self.week_number} - {self.subject.name}: {self.topic}"
+
+class LearningMaterial(models.Model):
+    MATERIAL_TYPES = [
+        ('NOTES', 'Revision Notes'),
+        ('PAST_PAPER', 'Past Examination Paper'),
+        ('SYLLABUS', 'Curriculum Syllabus Guide'),
+    ]
+    subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
+    title = models.CharField(max_length=150)
+    material_type = models.CharField(max_length=15, choices=MATERIAL_TYPES, default='NOTES')
+    resource_url = models.URLField(help_text="Link to digital storage hosted notes or files (e.g., Google Drive/OneDrive)")
+    date_uploaded = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f"[{self.get_material_type_display()}] {self.title}"
+
+class TimetableSlot(models.Model):
+    DAYS_OF_WEEK = [
+        ('MON', 'Monday'),
+        ('TUE', 'Tuesday'),
+        ('WED', 'Wednesday'),
+        ('THU', 'Thursday'),
+        ('FRI', 'Friday'),
+    ]
+    stream = models.ForeignKey('ClassStream', on_delete=models.CASCADE)
+    subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
+    teacher = models.ForeignKey('StaffProfile', on_delete=models.CASCADE, limit_choices_to={'role_designation': 'TEACHER'})
+    day = models.CharField(max_length=3, choices=DAYS_OF_WEEK)
+    time_start = models.TimeField()
+    time_end = models.TimeField()
+
+    def __str__(self):
+        return f"{self.get_day_display()} | {self.time_start.strftime('%H:%M')} - {self.time_end.strftime('%H:%M')} ({self.subject.code})"
