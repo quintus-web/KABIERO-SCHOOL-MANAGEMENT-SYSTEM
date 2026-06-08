@@ -1,7 +1,7 @@
 <!-- finance/templates/finance/student_registry_workstation.html -->
 {% extends 'finance/base.html' %}
 
-{% block title %}Learner Registry Hub | Kabiero Academy{% endblock %}
+{% block title %}Learner Registry Hub | Crescent Heights{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
@@ -57,20 +57,7 @@
                     <th class="text-center">Lifecycle Status</th>
                     <th class="text-end pe-4">Actions</th>
                 </tr>
-                <!-- Inside your student directory table row loop: -->
-<td class="text-end">
-    <div class="d-flex justify-content-end gap-1.5">
-        <!-- Direct Individual SMS Trigger Route -->
-        <a href="{% url 'teacher_sms_broadcast' %}?student_id={{ student.id }}" class="btn btn-sm btn-outline-primary" title="Send SMS to Parent">
-            <i class="bi bi-chat-left-text-fill"></i>
-        </a>
-        
-        <!-- Existing view folder detail link button -->
-        <a href="{% url 'student_profile' student.id %}" class="btn btn-sm btn-dark">
-            View Folder
-        </a>
-    </div>
-</td>
+                <!-- per-student action column defined in the row body (header had misplaced per-row markup removed) -->
             </thead>
             <tbody>
                 {% for student in students %}
@@ -101,9 +88,13 @@
                         {% endif %}
                     </td>
                     <td class="text-end pe-4">
+                        {% if student.id %}
                         <a href="{% url 'student_profile' student.id %}" class="btn btn-outline-dark btn-sm rounded-pill font-semibold px-3" style="font-size: 0.8rem;">
                             <i class="bi bi-folder2-open me-1"></i> Open File
                         </a>
+                        {% else %}
+                        <span class="text-muted">No Valid ID</span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}
