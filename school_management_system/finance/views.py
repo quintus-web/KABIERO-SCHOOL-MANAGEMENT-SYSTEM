@@ -1046,24 +1046,29 @@ def faculty_directory(request):
 
 def add_student_registry(request):
     if request.method == 'POST':
-        # Create a student object and map the new fields
-        new_s = type('obj', (object,), {})()
-        new_s.admission_number = request.POST.get('adm_number')
-        new_s.id = int(new_s.admission_number)
-        new_s.first_name = request.POST.get('first_name')
-        new_s.last_name = request.POST.get('last_name')
-        new_s.current_grade = request.POST.get('grade')
+        # 1. Capture the form data safely
+        adm_number = request.POST.get('adm_number')
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        grade = request.POST.get('grade')
+        guardian_name = request.POST.get('guardian_name')
+        parent_phone = request.POST.get('parent_phone')
+        blood_group = request.POST.get('blood_group')
         
-        # Capture the new data fields
-        new_s.guardian_name = request.POST.get('guardian_name')
-        new_s.parent_phone = request.POST.get('parent_phone')
-        new_s.blood_group = request.POST.get('blood_group')
-        new_s.current_balance = 0.00 # Fresh student
+        # 2. Save permanently to the production database
+        # (Check your models.py if your field names differ slightly from these)
+        new_student = Student.objects.create(
+            admission_number=adm_number,
+            first_name=first_name,
+            last_name=last_name,
+            current_grade=grade,
+            guardian_name=guardian_name,
+            parent_phone=parent_phone,
+            blood_group=blood_group
+            # If current_balance is a field in your model, add: current_balance=0.00
+        )
         
-        # Add to the Memory Bank
-        newly_added_students.append(new_s)
-        
-        messages.success(request, f"Learner {new_s.first_name} {new_s.last_name} has been successfully registered!")
+        messages.success(request, f"Learner {new_student.first_name} {new_student.last_name} has been permanently registered!")
         return redirect('bursar_dashboard')
         
     return render(request, 'finance/add_student.html')
