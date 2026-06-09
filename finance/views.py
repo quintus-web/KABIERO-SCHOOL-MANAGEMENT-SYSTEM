@@ -101,10 +101,11 @@ def student_registry_workstation(request):
     if selected_stream:
         students = students.filter(class_stream__name=selected_stream)
 
-    return render(request, "registry/learners.html", {
+    return render(request, "finance/learners.html", {
         "students": students,
         "selected_stream": selected_stream
     })
+
 
 
 @login_required

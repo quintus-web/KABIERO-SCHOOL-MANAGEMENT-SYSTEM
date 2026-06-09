@@ -1,0 +1,103 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Daily Attendance Sheet - Kabiero Academy{% endblock %}
+
+{% block content %}
+<div class="mb-3 no-print">
+    <a href="{% url 'attendance_deck' %}" class="btn btn-sm btn-outline-secondary rounded-3">
+        <i class="bi bi-arrow-left"></i> Back to Control Deck
+    </a>
+</div>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">Daily Student Roll-Call</h3>
+        <p class="text-muted small text-uppercase fw-semibold mb-0">
+            Active Tracking: <span class="text-primary fw-bold">{{ selected_stream|default:"No Stream Selected" }}</span> | Date: {{ current_date }}
+        </p>
+    </div>
+    
+    <form method="GET" action="" class="d-flex gap-2 no-print" style="max-width: 300px;">
+        <select name="stream_id" class="form-select form-select-sm border-secondary-subtle" onchange="this.form.submit()">
+            <option value="">-- Change Stream Block --</option>
+            {% for stream in streams %}
+                <option value="{{ stream }}" {% if stream == selected_stream %}selected{% endif %}>{{ stream }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+<form method="POST" action="/attendance/commit-bulk-attendance/">
+    {% csrf_token %}
+    <input type="hidden" name="class_stream" value="{{ selected_stream }}">
+
+    <div class="card card-custom shadow-sm border-0">
+        <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center no-print">
+            <h6 class="fw-bold mb-0"><i class="bi bi-list-check me-2 text-success"></i>Active Class Roster Checklist</h6>
+            <span class="badge bg-secondary font-monospace">{{ students|length }} Learners Loaded</span>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4" style="width: 15%;">Adm No.</th>
+                        <th style="width: 45%;">Learner Full Name</th>
+                        <th style="width: 15%;">Gender</th>
+                        <th class="text-center" style="width: 25%;">Attendance Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr class="border-bottom">
+                        <td class="ps-4">
+                            <code class="fw-bold text-secondary font-monospace">{{ student.admission_number }}</code>
+                            <input type="hidden" name="student_ids" value="{{ student.id }}">
+                        </td>
+                        <td>
+                            <span class="fw-semibold text-slate-900" style="color: #0f172a;">{{ student.first_name }} {{ student.last_name }}</span>
+                        </td>
+                        <td>
+                            <span class="small fw-medium text-muted">{% if student.gender == 'M' %}Boy{% else %}Girl{% endif %}</span>
+                        </td>
+                        <td class="text-center py-2 no-print">
+                            <div class="btn-group w-100 px-3" role="group" aria-label="Attendance Status Toggle">
+                                <input type="radio" class="btn-check" name="status_{{ student.id }}" id="present_{{ student.id }}" value="PRESENT" checked autocomplete="off">
+                                <label class="btn btn-outline-success btn-sm fw-semibold py-1.5" for="present_{{ student.id }}">
+                                    <i class="bi bi-check-circle-fill me-1 small"></i> Present
+                                </label>
+
+                                <input type="radio" class="btn-check" name="status_{{ student.id }}" id="absent_{{ student.id }}" value="ABSENT" autocomplete="off">
+                                <label class="btn btn-outline-danger btn-sm fw-semibold py-1.5" for="absent_{{ student.id }}">
+                                    <i class="bi bi-x-circle-fill me-1 small"></i> Absent
+                                </label>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            <div class="py-4">
+                                <i class="bi bi-clipboard-x text-muted mb-3 d-block" style="font-size: 3rem;"></i>
+                                <h5 class="fw-bold text-dark mb-1">No Active Learners Located</h5>
+                                <p class="text-muted small mx-auto mb-0" style="max-width: 350px;">
+                                    Please select an active stream module block or seed student configuration lines to view the roll-call sheets.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if students %}
+        <div class="card-footer bg-white p-3 border-top text-end no-print">
+            <button type="submit" class="btn btn-success px-5 py-2.5 rounded-3 fw-bold shadow-sm">
+                <i class="bi bi-cloud-arrow-up-fill me-2 fs-6"></i> Save Complete Roll-Call Register
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</form>
+{% endblock %}

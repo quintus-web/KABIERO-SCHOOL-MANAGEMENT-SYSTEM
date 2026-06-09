@@ -1,3 +1,4 @@
+<!-- finance/templates/finance/base.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -55,84 +56,84 @@
                     <span style="letter-spacing: 0.05em; font-size: 0.9rem;">KABIERO ACADEMY</span>
                 </a>
             </div>
+            
             <ul class="sidebar-menu-list">
-                {% if request.session.active_role_context == 'Admin' or request.session.active_role_context == 'Headteacher' or request.session.active_role_context == 'Deputy' %}
-                    <li class="sidebar-menu-item">
-                        <a class="sidebar-link" href="{% url 'executive_kpis' %}">
-                            <i class="bi bi-speedometer2 text-white-50 fs-5"></i> <span>Executive Analytics</span>
-                        </a>
-                    </li>
-                    <div class="role-section-label text-white-50 small uppercase fw-bold px-3 pt-3 pb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Core Operations</div>
-                    <li class="sidebar-menu-item">
-                        <a class="sidebar-link" href="{% url 'student_registry' %}">
-                            <i class="bi bi-person-video3 text-white-50 fs-5"></i> <span>Learner Matrix</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item">
-                        <a class="sidebar-link" href="{% url 'staff_management_matrix' %}">
-                            <i class="bi bi-people-fill text-white-50 fs-5"></i> <span>Staff Directory</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item">
-                        <a class="sidebar-link" href="{% url 'attendance_deck' %}">
-                            <i class="bi bi-clock-history text-white-50 fs-5"></i> <span>Attendance Hub</span>
-                        </a>
-                    </li>
-                {% endif %}
+                <!-- ── MODULE ZONE: EXECUTIVE CORE ── -->
+                <li class="sidebar-menu-item">
+                    <a class="sidebar-link" href="{% url 'executive_kpis' %}">
+                        <i class="bi bi-speedometer2 text-white-50 fs-5"></i> <span>Executive Analytics</span>
+                    </a>
+                </li>
+                
+                <div class="role-section-label text-white-50 small uppercase fw-bold px-3 pt-3 pb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Core Operations</div>
+                <li class="sidebar-menu-item">
+                    <a class="sidebar-link" href="{% url 'student_registry' %}">
+                        <i class="bi bi-person-video3 text-white-50 fs-5"></i> <span>Learner Matrix</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a class="sidebar-link" href="{% url 'staff_management_matrix' %}">
+                        <i class="bi bi-people-fill text-white-50 fs-5"></i> <span>Staff Directory</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a class="sidebar-link" href="{% url 'attendance_deck' %}">
+                        <i class="bi bi-clock-history text-white-50 fs-5"></i> <span>Attendance Hub</span>
+                    </a>
+                </li>
 
-                {% if request.session.active_role_context == 'Bursar' or request.session.active_role_context == 'Headteacher' %}
-                    <div class="role-section-label text-white-50 small uppercase fw-bold px-3 pt-3 pb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Treasury Controls</div>
-                    <li class="sidebar-menu-item">
-                        <a class="sidebar-link" href="{% url 'bursar_dashboard' %}">
-                            <i class="bi bi-bank text-white-50 fs-5"></i> <span>Finance Registry</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item">
-                        <a class="sidebar-link" href="{% url 'fee_defaulters_portal' %}">
-                            <i class="bi bi-envelope-exclamation text-white-50 fs-5"></i> <span>Defaulters SMS</span>
-                        </a>
-                    </li>
-                {% endif %}
+                <!-- ── MODULE ZONE: FINANCIALS ── -->
+                <div class="role-section-label text-white-50 small uppercase fw-bold px-3 pt-3 pb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Treasury Controls</div>
+                <li class="sidebar-menu-item">
+                    <a class="sidebar-link" href="{% url 'bursar_dashboard' %}">
+                        <i class="bi bi-bank text-white-50 fs-5"></i> <span>Finance Registry</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a class="sidebar-link" href="{% url 'fee_defaulters_portal' %}">
+                        <i class="bi bi-envelope-exclamation text-white-50 fs-5"></i> <span>Defaulters SMS</span>
+                    </a>
+                </li>
 
-                {% if request.session.active_role_context == 'Teacher' or request.session.active_role_context == 'Teachers' or request.session.active_role_context == 'Headteacher' or request.session.active_role_context == 'Deputy' %}
-                    <div class="role-section-label text-white-50 small uppercase fw-bold px-3 pt-3 pb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Academic Workspace</div>
-                    <li class="sidebar-menu-item">
-                        <a class="sidebar-link" href="{% url 'academic_hub' %}">
-                            <i class="bi bi-book-half text-white-50 fs-5"></i> <span>Academic Hub</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item">
-                        <a class="sidebar-link" href="{% url 'marks_entry_portal' %}">
-                            <i class="bi bi-file-earmark-spreadsheet text-white-50 fs-5"></i> <span>Grading Desk</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item">
-                        <a class="sidebar-link" href="{% url 'teacher_sms_broadcast' %}">
-                            <i class="bi bi-chat-left-text text-white-50 fs-5"></i> <span>Parent SMS Broadcast</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item">
-                        <a class="sidebar-link" href="{% url 'academic_analytics' %}">
-                            <i class="bi bi-graph-up-arrow text-white-50 fs-5"></i> <span>Academic Analytics</span>
-                        </a>
-                    </li>
-                {% endif %}
+                <!-- ── MODULE ZONE: ACADEMICS ── -->
+                <div class="role-section-label text-white-50 small uppercase fw-bold px-3 pt-3 pb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Academic Workspace</div>
+                <li class="sidebar-menu-item">
+                    <a class="sidebar-link" href="{% url 'academic_hub' %}">
+                        <i class="bi bi-book-half text-white-50 fs-5"></i> <span>Academic Hub</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a class="sidebar-link" href="{% url 'marks_entry_portal' %}">
+                        <i class="bi bi-file-earmark-spreadsheet text-white-50 fs-5"></i> <span>Grading Desk</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a class="sidebar-link" href="{% url 'teacher_sms_broadcast' %}">
+                        <i class="bi bi-chat-left-text text-white-50 fs-5"></i> <span>Parent SMS Broadcast</span>
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a class="sidebar-link" href="{% url 'academic_analytics' %}">
+                        <i class="bi bi-graph-up-arrow text-white-50 fs-5"></i> <span>Academic Analytics</span>
+                    </a>
+                </li>
 
-                {% if request.session.active_role_context == 'Support' or request.session.active_role_context == 'Headteacher' %}
-                    <div class="role-section-label text-white-50 small uppercase fw-bold px-3 pt-3 pb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Logistics Nodes</div>
-                    <li class="sidebar-menu-item">
-                        <a class="sidebar-link" href="{% url 'inventory_deck' %}">
-                            <i class="bi bi-boxes text-white-50 fs-5"></i> <span>Inventory &amp; Assets</span>
-                        </a>
-                    </li>
-                {% endif %}
+                <!-- ── MODULE ZONE: STORES ── -->
+                <div class="role-section-label text-white-50 small uppercase fw-bold px-3 pt-3 pb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Logistics Nodes</div>
+                <li class="sidebar-menu-item">
+                    <a class="sidebar-link" href="{% url 'inventory_deck' %}">
+                        <i class="bi bi-boxes text-white-50 fs-5"></i> <span>Inventory &amp; Assets</span>
+                    </a>
+                </li>
             </ul>
+            
             <div class="sidebar-footer">
                 <a href="{% url 'staff_logout' %}" class="sidebar-link p-1 text-danger">
                     <i class="bi bi-box-arrow-left fs-5 text-danger"></i> <span class="fw-semibold">Sign Out Session</span>
                 </a>
             </div>
         </aside>
+        
         <main class="main-workspace-content">
             {% if messages %}
                 <div class="row no-print mb-3">
@@ -149,6 +150,7 @@
             {% block content %}{% endblock %}
         </main>
     </div>
+    
     <div class="no-print" style="position: fixed; bottom: 25px; right: 25px; z-index: 99999;">
         <a href="{% url 'dev_debug_console' %}" class="btn btn-sm btn-dark shadow rounded-pill px-3 py-2 border border-secondary" style="font-size: 0.78rem;">
             <i class="bi bi-terminal me-1 text-warning"></i> Developer Console

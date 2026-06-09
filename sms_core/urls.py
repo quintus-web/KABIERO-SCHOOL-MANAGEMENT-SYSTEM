@@ -1,11 +1,3 @@
-# sms_core/urls.py
-from django.contrib import admin
-from django.urls import path, include
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include('finance.urls')),  # Forces Django to unpack strings, not modules
-]
 # finance/urls.py
 from django.urls import path
 from finance import views
@@ -44,7 +36,12 @@ urlpatterns = [
     # ── EXTERNAL PARENT GATEWAY SYSTEM ──
     path('parent-portal/', views.parent_portal_gateway, name='parent_portal_gateway'),
     
-    # ── ROUTINE ASSET LOGISTICS NODES ──
+    # ── ROUTINE ASSET LOGISTICS NODES & ATTENDANCE TRACKERS ──
     path('logistics/attendance-deck/', views.global_attendance_control_deck, name='attendance_deck'),
+    
+    # 🎯 FIXED: These two critical lines are now restored back into your application!
+    path('attendance/daily-deck/', views.daily_attendance_deck, name='daily_attendance_deck'),
+    path('attendance/commit-bulk-attendance/', views.commit_bulk_attendance, name='commit_bulk_attendance'),
+    
     path('logistics/inventory/', views.inventory_asset_control_deck, name='inventory_deck'),
 ]
