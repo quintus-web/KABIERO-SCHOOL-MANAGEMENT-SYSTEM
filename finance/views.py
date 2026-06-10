@@ -404,12 +404,31 @@ def staff_logout_view(request):
 
 @login_required
 def developer_debug_console_hub(request):
-    if request.method == "POST" and request.POST.get("action") == "purge":
-        Student.objects.all().delete()
-        messages.success(request, "Local development sandbox records truncated clean.")
-        
+    from finance.models import Student, ClassStream
+    from django.core.management import call_command
+    import io
+    from contextlib import redirect_stdout
+
+    if request.method == "POST":
+        action = request.POST.get("action", "")
+        if action == "purge":
+            Student.objects.all().delete()
+            messages.success(request, "Local development sandbox records truncated clean.")
+        elif action == "inject_mock_data":
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                call_command('seed_data', verbosity=0)
+            output = buf.getvalue()
+            count = Student.objects.count()
+            messages.success(request, f"Seed complete. {count} students loaded from CSV.")
+        return redirect('dev_debug_console')
+
     return render(request, "finance/developer_debug_console.html", {
-        "total_students": Student.objects.count()
+        "total_students": Student.objects.count(),
+        "total_streams": ClassStream.objects.count(),
+        "total_infractions": 0,
+        "raw_students": Student.objects.all()[:10],
+        "raw_staff": []
     })
 
 
