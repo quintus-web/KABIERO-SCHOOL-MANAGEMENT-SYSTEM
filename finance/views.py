@@ -208,8 +208,18 @@ def collect_fee_payment(request, student_id):
             messages.error(request, "Invalid transactional processing parameter.")
             return redirect(request.path)
 
+        open_invoice = FeeInvoice.objects.filter(student=student).order_by('date_issued').first()
+        if not open_invoice:
+            open_invoice = FeeInvoice.objects.create(
+                student=student,
+                title="Term 1 Tuition Fee",
+                amount=Decimal("45000.00"),
+                description="Default term invoice generated at first payment collection"
+            )
+
         FeeReceipt.objects.create(
             student=student,
+            invoice=open_invoice,
             amount=amount,
             status="COMPLETED",
             reference_code=f"RCPT-{timezone.now().strftime('%Y%m%d%H%M%S')}"
