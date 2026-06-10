@@ -522,3 +522,57 @@ def delete_student_record(request, student_id):
         
     # Fallback to confirmation prompt if anyone hits via GET
     return render(request, "finance/confirm_delete.html", {"student": student})
+
+
+@login_required
+def attendance_history_report(request):
+    selected_stream = request.GET.get("stream_id", "")
+    selected_date = request.GET.get("date", timezone.now().date().isoformat())
+
+    students_in_stream = Student.objects.none()
+    day_logs = StudentAttendanceRecord.objects.none()
+    log_map = {}
+    stream_summary = {"total": 0, "present": 0, "absent": 0, "percentage": 100.0}
+
+    if selected_stream:
+        students_in_stream = Student.objects.filter(
+            class_stream__name=selected_stream,
+            status='ACTIVE'
+        ).order_by('first_name')
+
+        day_logs = StudentAttendanceRecord.objects.filter(
+            date=selected_date,
+            student__class_stream__name=selected_stream
+        )
+
+        log_map = {log.student_id: log for log in day_logs}
+
+        present_count = sum(1 for log in day_logs if log.is_present)
+        total_for_day = day_logs.count()
+        stream_summary = {
+            "total": total_for_day,
+            "present": present_count,
+            "absent": total_for_day - present_count,
+            "percentage": round((present_count / total_for_day) * 100, 1) if total_for_day else 0.0
+        }
+
+    db_streams = sorted(
+        set(Student.objects.exclude(class_stream__isnull=True).values_list('class_stream__name', flat=True))
+    )
+
+    student_rows = []
+    for student in students_in_stream:
+        log = log_map.get(student.id) if selected_stream else None
+        student_rows.append({
+            "student": student,
+            "log": log
+        })
+
+    return render(request, "finance/attendance_history_report.html", {
+        "streams": db_streams,
+        "selected_stream": selected_stream,
+        "selected_date": selected_date,
+        "student_rows": student_rows,
+        "stream_summary": stream_summary,
+        "current_page": "attendance"
+    })

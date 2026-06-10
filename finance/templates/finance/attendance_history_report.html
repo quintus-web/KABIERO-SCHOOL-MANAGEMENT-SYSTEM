@@ -1,0 +1,118 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Attendance History - Crescent Heights Academy{% endblock %}
+
+{% block content %}
+<div class="mb-3 no-print">
+    <a href="{% url 'attendance_deck' %}" class="btn btn-sm btn-outline-secondary rounded-3">
+        <i class="bi bi-arrow-left"></i> Back to Control Deck
+    </a>
+</div>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">Attendance History Report</h3>
+        <p class="text-muted small text-uppercase fw-semibold mb-0">Review roll-call records by stream and date</p>
+    </div>
+    
+    <form method="GET" action="" class="d-flex gap-2 no-print flex-wrap" style="max-width: 500px;">
+        <select name="stream_id" class="form-select form-select-sm border-secondary-subtle" onchange="this.form.submit()">
+            <option value="">-- Select Stream --</option>
+            {% for stream in streams %}
+                <option value="{{ stream }}" {% if stream == selected_stream %}selected{% endif %}>{{ stream }}</option>
+            {% endfor %}
+        </select>
+        <input type="date" name="date" value="{{ selected_date }}" class="form-control form-control-sm" onchange="this.form.submit()" style="width: auto;">
+        <button type="submit" class="btn btn-sm btn-dark px-3 fw-semibold">Load</button>
+    </form>
+</div>
+
+{% if selected_stream %}
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card bg-white border p-3">
+            <span class="text-muted small text-uppercase fw-bold">Total Students</span>
+            <h2 class="fw-bold text-dark mb-0 font-monospace">{{ stream_summary.total }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success bg-opacity-10 border-success border p-3">
+            <span class="text-success small text-uppercase fw-bold">Present</span>
+            <h2 class="fw-bold text-success mb-0 font-monospace">{{ stream_summary.present }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger bg-opacity-10 border-danger border p-3">
+            <span class="text-danger small text-uppercase fw-bold">Absent</span>
+            <h2 class="fw-bold text-danger mb-0 font-monospace">{{ stream_summary.absent }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary bg-opacity-10 border-primary border p-3">
+            <span class="text-primary small text-uppercase fw-bold">Attendance %</span>
+            <h2 class="fw-bold text-primary mb-0 font-monospace">{{ stream_summary.percentage }}%</h2>
+        </div>
+    </div>
+</div>
+
+<div class="card card-custom">
+    <div class="table-responsive">
+        <table class="table table-custom table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-4">Adm No</th>
+                    <th>Student Name</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Marked At</th>
+                    <th>Remarks</th>
+                </tr>
+            </thead>
+<tbody>
+    {% for row in student_rows %}
+    {% with student=row.student log=row.log %}
+    <tr class="border-bottom {% if log and not log.is_present %}table-danger{% endif %}">
+        <td class="ps-4"><code class="fw-bold font-monospace text-secondary">{{ student.admission_number }}</code></td>
+        <td>
+            <span class="fw-semibold text-dark">{{ student.first_name }} {{ student.last_name }}</span>
+        </td>
+        <td class="text-center">
+            {% if log %}
+                {% if log.is_present %}
+                    <span class="badge bg-success rounded-pill px-3 py-1.5 fw-medium">Present</span>
+                {% else %}
+                    <span class="badge bg-danger rounded-pill px-3 py-1.5 fw-medium">Absent</span>
+                {% endif %}
+            {% else %}
+                <span class="badge bg-secondary rounded-pill px-3 py-1.5 fw-medium">Not Marked</span>
+            {% endif %}
+        </td>
+        <td class="text-center text-muted small">
+            {% if log.logged_at %}{{ log.logged_at|date:"H:i" }}{% else %}—{% endif %}
+        </td>
+        <td class="small text-muted">{{ log.remarks|default:"—" }}</td>
+    </tr>
+    {% endwith %}
+    {% empty %}
+    <tr>
+        <td colspan="5" class="text-center py-5 text-muted">
+            <div class="py-4">
+                <i class="bi bi-people text-muted mb-3 d-block" style="font-size: 3rem;"></i>
+                <h5 class="fw-bold text-dark mb-1">No active students in this stream</h5>
+            </div>
+        </td>
+    </tr>
+    {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card card-custom">
+    <div class="card-body text-center py-5 text-muted">
+        <i class="bi bi-funnel text-muted mb-3 d-block" style="font-size: 3rem;"></i>
+        <h5 class="fw-bold text-dark mb-1">Select a stream to view attendance</h5>
+        <p class="small mx-auto mb-0" style="max-width: 350px;">Use the controls above to filter by stream and date.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
