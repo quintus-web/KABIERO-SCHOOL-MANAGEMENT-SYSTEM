@@ -128,7 +128,7 @@ def stage_demo_environment():
     ExamRecord.objects.create(student=student_records['103'], subject=math, term='TERM_2', year=2026, cat_1=11.0, cat_2=10.0, final_exam=54.0)  # Total: 75.0% (Variance: +1.0%)
 
     print("\n==================================================================")
-    print("✅ KABIERO ACADEMY DEMO SYSTEM INSTANTLY LOADED WITH MASTER DATA!")
+    print("✅ Crescent Heights ACADEMY DEMO SYSTEM INSTANTLY LOADED WITH MASTER DATA!")
     print(f"   🔹 Registered Teachers: {Teacher.objects.count()}")
     print(f"   🔹 Formatted Streams:  {ClassStream.objects.count()}")
     print(f"   🔹 Active Students:    {Student.objects.count()}")
