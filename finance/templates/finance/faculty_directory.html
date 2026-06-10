@@ -26,7 +26,7 @@
                 <tr class="border-bottom">
                     <td class="ps-4"><code class="fw-bold font-monospace text-secondary">{{ teacher.employee_number }}</code></td>
                     <td>
-                        <span class="fw-semibold text-dark">{{ teacher.user.first_name }} {{ teacher.user.last_name }}</span>
+                        <span class="fw-semibold text-dark">{% if teacher.user %}{{ teacher.user.first_name }} {{ teacher.user.last_name }}{% else %}—{% endif %}</span>
                     </td>
                     <td>{{ teacher.specialization }}</td>
                     <td class="text-center font-monospace small text-muted">{{ teacher.phone_line }}</td>

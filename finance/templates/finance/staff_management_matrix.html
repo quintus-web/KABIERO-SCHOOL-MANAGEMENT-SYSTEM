@@ -41,10 +41,10 @@
                     {% for staff in staff_roster %}
                     <tr class="border-bottom">
                         <td><code class="fw-bold text-primary">{{ staff.employee_number }}</code></td>
-                        <td>
-                            <div class="fw-bold text-dark">{{ staff.user.first_name }} {{ staff.user.last_name }}</div>
-                            <small class="text-muted font-monospace" style="font-size: 0.75rem;">{{ staff.user.email|default:"no-reply@school.sc.ke" }}</small>
-                        </td>
+                    <td>
+                        <div class="fw-bold text-dark">{% if staff.user %}{{ staff.user.first_name }} {{ staff.user.last_name }}{% else %}—{% endif %}</div>
+                        <small class="text-muted font-monospace" style="font-size: 0.75rem;">{% if staff.user %}{{ staff.user.email|default:"no-reply@school.sc.ke" }}{% else %}No linked login{% endif %}</small>
+                    </td>
                         <td>
                             {% if staff.role_designation == 'PRINCIPAL' %}
                                 <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-20 px-2.5 py-1 fw-bold">Admin Master / Principal</span>
@@ -75,7 +75,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">No staff configurations currently saved inside SQLite tables. Click your Yellow System Admin Console button to inject mock files!</td>
+                        <td colspan="8" class="text-center text-muted py-4">No staff configurations currently saved inside SQLite tables. Click your Yellow System Admin Console button to inject mock files!</td>
                     </tr>
                     {% endfor %}
                 </tbody>
