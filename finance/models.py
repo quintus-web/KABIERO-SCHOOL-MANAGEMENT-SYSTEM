@@ -11,6 +11,24 @@ class ClassStream(models.Model):
     def __str__(self):
         return self.name
 
+class FeeStructure(models.Model):
+    TERM_CHOICES = [
+        ('TERM_1', 'Term 1'),
+        ('TERM_2', 'Term 2'),
+        ('TERM_3', 'Term 3'),
+    ]
+    level = models.CharField(max_length=50)
+    term = models.CharField(max_length=10, choices=TERM_CHOICES)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    year = models.IntegerField(default=2026)
+
+    class Meta:
+        unique_together = ('level', 'term', 'year')
+        ordering = ['level', 'term']
+
+    def __str__(self):
+        return f"{self.level} - {self.get_term_display()} {self.year}: KES {self.amount:,.2f}"
+
 class Subject(models.Model):
     code = models.CharField(max_length=10, unique=True)
     name = models.CharField(max_length=100)

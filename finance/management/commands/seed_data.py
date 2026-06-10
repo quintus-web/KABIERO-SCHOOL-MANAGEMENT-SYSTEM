@@ -3,7 +3,7 @@ import os
 import csv
 from decimal import Decimal
 from django.core.management.base import BaseCommand
-from finance.models import Student, ClassStream, Subject
+from finance.models import Student, ClassStream, Subject, FeeStructure
 
 class Command(BaseCommand):
     help = "Parses the master school CSV dataset and seeds the SQLite database tables seamlessly."
@@ -11,6 +11,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
         csv_path = os.path.join(base_dir, "Crescent Heights School - STUDENTS.csv")
+        fees_path = os.path.join(base_dir, "Crescent_Heights_Fees_2026.csv")
 
         if not os.path.exists(csv_path):
             self.stdout.write(self.style.ERROR(f"Data engine failure: CSV file not found at {csv_path}"))
@@ -18,9 +19,44 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.WARNING("Starting Milestone 1: Data Engine Migration parsing pipeline..."))
 
+        term_fee_map = {}
+        if os.path.exists(fees_path):
+            with open(fees_path, newline="", encoding="utf-8") as fee_file:
+                fee_reader = csv.reader(fee_file)
+                next(fee_reader, None)
+                for row in fee_reader:
+                    if not row or len(row) < 4:
+                        continue
+                    level = row[0].strip()
+                    term_1 = Decimal(row[1].strip())
+                    term_2 = Decimal(row[2].strip())
+                    term_3 = Decimal(row[3].strip())
+                    term_fee_map[level] = {'TERM_1': term_1, 'TERM_2': term_2, 'TERM_3': term_3}
+
+                    FeeStructure.objects.get_or_create(
+                        level=level,
+                        term='TERM_1',
+                        year=2026,
+                        defaults={'amount': term_1}
+                    )
+                    FeeStructure.objects.get_or_create(
+                        level=level,
+                        term='TERM_2',
+                        year=2026,
+                        defaults={'amount': term_2}
+                    )
+                    FeeStructure.objects.get_or_create(
+                        level=level,
+                        term='TERM_3',
+                        year=2026,
+                        defaults={'amount': term_3}
+                    )
+
+            self.stdout.write(self.style.SUCCESS(f"Seeded {len(term_fee_map)} fee structures for 2026."))
+
         with open(csv_path, newline="", encoding="utf-8") as file:
             reader = csv.reader(file)
-            header = next(reader, None)  # Skip table header column mapping
+            header = next(reader, None)
 
             student_count = 0
             stream_count = 0
@@ -29,28 +65,25 @@ class Command(BaseCommand):
                 if not row or len(row) < 6:
                     continue
 
-                # 1. Map columns from your standard spreadsheet layout
                 adm_no = row[0].strip()
                 full_name = row[1].strip()
                 gender_raw = row[2].strip().upper()
-                stream_name = row[5].strip()  # Column 6: Current Grade/Stream
+                stream_name = row[5].strip()
                 guardian = row[8].strip() if len(row) > 8 else "Not Provided"
                 phone = row[9].strip() if len(row) > 9 else "0700000000"
 
-                # Parse first and last names out cleanly
                 name_parts = full_name.split(" ", 1)
                 first_name = name_parts[0]
                 last_name = name_parts[1] if len(name_parts) > 1 else "Ondicho"
 
-                # Normalize gender parameter choices
                 gender = 'F' if gender_raw in ['F', 'FEMALE', 'GIRL'] else 'M'
 
-                # 2. Dynamically fetch or provision the Class Stream allocation object
                 stream_instance, created = ClassStream.objects.get_or_create(name=stream_name)
                 if created:
                     stream_count += 1
 
-                # 3. Create or update the Student record database mapping row
+                opening_balance = term_fee_map.get(stream_name, {}).get('TERM_1', Decimal("0.00"))
+
                 Student.objects.update_or_create(
                     admission_number=adm_no,
                     defaults={
@@ -60,7 +93,7 @@ class Command(BaseCommand):
                         'class_stream': stream_instance,
                         'guardian_name': guardian,
                         'parent_phone': phone,
-                        'current_balance': Decimal("0.00")  # Set clean default opening balance balances
+                        'current_balance': opening_balance
                     }
                 )
                 student_count += 1
