@@ -143,13 +143,14 @@ def add_student_registry(request):
 
 @login_required
 def staff_management_matrix(request):
-    staff_members = StaffProfile.objects.all()
-    return render(request, "finance/staff_matrix.html", {"staff": staff_members})
+    staff_roster = StaffProfile.objects.all().select_related('user')
+    return render(request, "finance/staff_matrix.html", {"staff_roster": staff_roster})
 
 
 @login_required
 def faculty_directory(request):
-    return render(request, "finance/faculty_directory.html")
+    teachers = StaffProfile.objects.filter(role_designation='TEACHER').select_related('user')
+    return render(request, "finance/faculty_directory.html", {"teachers": teachers})
 
 
 # =========================================================
