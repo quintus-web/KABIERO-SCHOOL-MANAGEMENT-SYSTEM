@@ -144,7 +144,7 @@ def add_student_registry(request):
 @login_required
 def staff_management_matrix(request):
     staff_roster = StaffProfile.objects.all().select_related('user')
-    return render(request, "finance/staff_matrix.html", {"staff_roster": staff_roster})
+    return render(request, "finance/staff_management_matrix.html", {"staff_roster": staff_roster})
 
 
 @login_required
