@@ -606,3 +606,96 @@ def attendance_history_report(request):
         "stream_summary": stream_summary,
         "current_page": "attendance"
     })
+
+
+@login_required
+def staff_create(request):
+    subjects = Subject.objects.all().order_by('name')
+    if request.method == "POST":
+        data = request.POST
+        username = data.get("username", "").strip()
+        password = data.get("password", "").strip()
+        first_name = data.get("first_name", "").strip()
+        last_name = data.get("last_name", "").strip()
+        employee_number = data.get("employee_number", "").strip()
+        role = data.get("role", "TEACHER")
+        specialization_id = data.get("specialization")
+        phone_line = data.get("phone_line", "0700000000").strip()
+        base_salary = data.get("base_salary_kes", "45000")
+
+        if not username or not password or not first_name or not last_name or not employee_number:
+            messages.error(request, "Required fields missing.")
+            return redirect("staff_create")
+
+        user, created = User.objects.get_or_create(username=username, defaults={"first_name": first_name, "last_name": last_name})
+        if not created:
+            messages.error(request, "Username already exists.")
+            return redirect("staff_create")
+        user.set_password(password)
+        user.save()
+
+        specialization = Subject.objects.filter(id=specialization_id).first() if specialization_id else None
+        StaffProfile.objects.create(
+            user=user,
+            employee_number=employee_number,
+            role_designation=role,
+            specialization=specialization.name if specialization else "General",
+            phone_line=phone_line,
+            base_salary_kes=base_salary
+        )
+        messages.success(request, "Staff record initialized successfully.")
+        return redirect("staff_management")
+
+    return render(request, "finance/staff_form.html", {
+        "subjects": subjects,
+        "mode": "create"
+    })
+
+
+@login_required
+def staff_edit(request, staff_id):
+    profile = get_object_or_404(StaffProfile, id=staff_id)
+    subjects = Subject.objects.all().order_by('name')
+    if request.method == "POST":
+        data = request.POST
+        profile.user.first_name = data.get("first_name", "").strip() or profile.user.first_name
+        profile.user.last_name = data.get("last_name", "").strip() or profile.user.last_name
+        profile.user.save()
+        profile.role_designation = data.get("role", profile.role_designation)
+        profile.employee_number = data.get("employee_number", profile.employee_number).strip()
+        specialization_id = data.get("specialization")
+        specialization = Subject.objects.filter(id=specialization_id).first() if specialization_id else None
+        profile.specialization = specialization.name if specialization else profile.specialization
+        profile.phone_line = data.get("phone_line", profile.phone_line).strip()
+        profile.base_salary_kes = data.get("base_salary_kes", profile.base_salary_kes)
+        profile.current_status = data.get("status", profile.current_status)
+        profile.save()
+        messages.success(request, "Staff profile updated successfully.")
+        return redirect("staff_management")
+    return render(request, "finance/staff_form.html", {
+        "subjects": subjects,
+        "mode": "edit",
+        "profile": profile
+    })
+
+
+@login_required
+def leave_management(request):
+    pending = LeaveApplication.objects.filter(is_approved=False).select_related('staff__user').order_by('-id')
+    approved = LeaveApplication.objects.filter(is_approved=True).select_related('staff__user').order_by('-id')[:50]
+    if request.method == "POST":
+        action = request.POST.get("action")
+        leave_id = request.POST.get("leave_id")
+        leave = get_object_or_404(LeaveApplication, id=leave_id)
+        if action == "approve":
+            leave.is_approved = True
+            leave.save()
+            messages.success(request, "Leave application approved.")
+        elif action == "reject":
+            leave.delete()
+            messages.warning(request, "Leave application rejected and removed.")
+        return redirect("leave_management")
+    return render(request, "finance/leave_management.html", {
+        "pending_leaves": pending,
+        "approved_leaves": approved
+    })

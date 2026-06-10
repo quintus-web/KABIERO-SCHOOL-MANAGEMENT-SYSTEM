@@ -1,0 +1,84 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}{% if mode == 'create' %}Add Staff{% else %}Edit Staff{% endif %}{% endblock %}
+
+{% block content %}
+<div class="mb-3 no-print">
+    <a href="{% url 'staff_management' %}" class="btn btn-sm btn-outline-secondary rounded-3">
+        <i class="bi bi-arrow-left"></i> Back to Staff Matrix
+    </a>
+</div>
+
+<div class="card card-custom border bg-white shadow-sm p-4" style="max-width: 800px;">
+    <h5 class="fw-bold text-dark mb-3">
+        <i class="bi bi-person-gear me-2"></i>
+        {% if mode == 'create' %}Initialize Staff Profile{% else %}Modify Staff Profile{% endif %}
+    </h5>
+    <form method="POST" class="row g-3">
+        {% csrf_token %}
+        <div class="col-md-6">
+            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.72rem;">Employee Number</label>
+            <input type="text" name="employee_number" class="form-control" value="{% if profile %}{{ profile.employee_number }}{% endif %}" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.72rem;">Username (login)</label>
+            <input type="text" name="username" class="form-control" value="{% if profile %}{{ profile.user.username }}{% endif %}" {% if mode == 'edit' %}readonly{% endif %} required>
+        </div>
+        {% if mode == 'create' %}
+        <div class="col-md-6">
+            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.72rem;">Password</label>
+            <input type="password" name="password" class="form-control" required>
+        </div>
+        {% endif %}
+        <div class="col-md-6">
+            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.72rem;">First Name</label>
+            <input type="text" name="first_name" class="form-control" value="{% if profile %}{{ profile.user.first_name }}{% endif %}" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.72rem;">Last Name</label>
+            <input type="text" name="last_name" class="form-control" value="{% if profile %}{{ profile.user.last_name }}{% endif %}" required>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.72rem;">Role</label>
+            <select name="role" class="form-select">
+                <option value="TEACHER" {% if profile and profile.role_designation == 'TEACHER' %}selected{% endif %}>Teacher</option>
+                <option value="PRINCIPAL" {% if profile and profile.role_designation == 'PRINCIPAL' %}selected{% endif %}>Principal</option>
+                <option value="ACCOUNTANT" {% if profile and profile.role_designation == 'ACCOUNTANT' %}selected{% endif %}>Bursar / Accountant</option>
+                <option value="SUPPORT" {% if profile and profile.role_designation == 'SUPPORT' %}selected{% endif %}>Support Staff</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.72rem;">Specialization</label>
+            <select name="specialization" class="form-select">
+                <option value="">-- Select Subject --</option>
+                {% for subject in subjects %}
+                <option value="{{ subject.id }}" {% if profile and profile.specialization == subject.name %}selected{% endif %}>{{ subject.name }} ({{ subject.code }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.72rem;">Phone Line</label>
+            <input type="text" name="phone_line" class="form-control" value="{% if profile %}{{ profile.phone_line }}{% endif %}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.72rem;">Base Salary (KES)</label>
+            <input type="number" step="0.01" name="base_salary_kes" class="form-control" value="{% if profile %}{{ profile.base_salary_kes }}{% endif %}">
+        </div>
+        {% if mode == 'edit' %}
+        <div class="col-md-6">
+            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.72rem;">Status</label>
+            <select name="status" class="form-select">
+                <option value="ACTIVE" {% if profile and profile.current_status == 'ACTIVE' %}selected{% endif %}>Active Duty</option>
+                <option value="ON_LEAVE" {% if profile and profile.current_status == 'ON_LEAVE' %}selected{% endif %}>On Sanctioned Leave</option>
+                <option value="SUSPENDED" {% if profile and profile.current_status == 'SUSPENDED' %}selected{% endif %}>Suspended</option>
+            </select>
+        </div>
+        {% endif %}
+        <div class="col-12 pt-2">
+            <button type="submit" class="btn btn-dark fw-bold px-4">
+                <i class="bi bi-check-circle me-1"></i> Save Staff Profile
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

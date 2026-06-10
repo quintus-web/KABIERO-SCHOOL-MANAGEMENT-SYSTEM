@@ -1,0 +1,93 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Leave Management - Crescent Heights Academy{% endblock %}
+
+{% block content %}
+<div class="mb-3 no-print">
+    <a href="{% url 'staff_management' %}" class="btn btn-sm btn-outline-secondary rounded-3">
+        <i class="bi bi-arrow-left"></i> Back to Staff Matrix
+    </a>
+</div>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">Leave Management Console</h3>
+        <p class="text-muted small text-uppercase fw-semibold mb-0">Review and action staff leave requests</p>
+    </div>
+</div>
+
+<div class="card card-custom border bg-white shadow-sm p-4 mb-4">
+    <h6 class="fw-bold text-warning mb-3"><i class="bi bi-hourglass-split me-2"></i>Pending Requests</h6>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.9rem;">
+            <thead>
+                <tr class="table-light border-bottom text-secondary uppercase small" style="font-size:0.75rem; font-weight:700;">
+                    <th>Staff</th>
+                    <th>Reason</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for leave in pending_leaves %}
+                <tr class="border-bottom">
+                    <td class="fw-bold text-dark">{{ leave.staff.user.first_name }} {{ leave.staff.user.last_name }}</td>
+                    <td>{{ leave.leave_reason }}</td>
+                    <td>{{ leave.start_date|date:"d M Y" }}</td>
+                    <td>{{ leave.end_date|date:"d M Y" }}</td>
+                    <td class="text-center">
+                        <form method="POST" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="approve">
+                            <input type="hidden" name="leave_id" value="{{ leave.id }}">
+                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3">Approve</button>
+                        </form>
+                        <form method="POST" class="d-inline ms-1">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="reject">
+                            <input type="hidden" name="leave_id" value="{{ leave.id }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted small py-4">No pending leave requests.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card card-custom border bg-white shadow-sm p-4">
+    <h6 class="fw-bold text-success mb-3"><i class="bi bi-check2-all me-2"></i>Approved / Closed</h6>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.9rem;">
+            <thead>
+                <tr class="table-light border-bottom text-secondary uppercase small" style="font-size:0.75rem; font-weight:700;">
+                    <th>Staff</th>
+                    <th>Reason</th>
+                    <th>Start</th>
+                    <th>End</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for leave in approved_leaves %}
+                <tr class="border-bottom">
+                    <td class="fw-bold text-dark">{{ leave.staff.user.first_name }} {{ leave.staff.user.last_name }}</td>
+                    <td>{{ leave.leave_reason }}</td>
+                    <td>{{ leave.start_date|date:"d M Y" }}</td>
+                    <td>{{ leave.end_date|date:"d M Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted small py-4">No approved leaves yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
