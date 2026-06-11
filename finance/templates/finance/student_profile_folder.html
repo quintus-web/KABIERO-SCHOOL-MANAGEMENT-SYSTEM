@@ -174,6 +174,44 @@
             </div>
         </div>
 
+        <!-- Module Section 2.5: Exam Records & Report Card -->
+        <div class="card card-custom p-4 border bg-white shadow-sm mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-file-earmark-spreadsheet text-success me-2"></i>Examination Grades</h6>
+                <a href="{% url 'generate_report_card' student.id %}?term=TERM_1&year=2026" class="btn btn-sm btn-dark fw-medium rounded-pill px-3" target="_blank">
+                    <i class="bi bi-printer me-1"></i> Print Report Card
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-borderless align-middle mb-0 text-nowrap" style="font-size: 0.88rem;">
+                    <thead>
+                        <tr class="table-light border-bottom">
+                            <th>Subject</th>
+                            <th class="text-center">CAT 1</th>
+                            <th class="text-center">CAT 2</th>
+                            <th class="text-center">Final Exam</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in exam_records %}
+                        <tr class="border-bottom">
+                            <td class="fw-medium">{{ record.subject.name }}</td>
+                            <td class="text-center font-monospace">{{ record.cat_1 }}</td>
+                            <td class="text-center font-monospace">{{ record.cat_2 }}</td>
+                            <td class="text-center font-monospace">{{ record.final_exam }}</td>
+                            <td class="text-end fw-bold text-primary font-monospace">{{ record.total_marks }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted small py-3">No examination records for this learner yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Module Section 3: Behavior and Infractions Tracker Registry -->
         <div class="card card-custom p-4 border bg-white shadow-sm mb-3">
             <div class="d-flex justify-content-between align-items-center mb-3">

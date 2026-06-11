@@ -29,6 +29,7 @@ urlpatterns = [
     path('attendance/commit-bulk-attendance/', views.commit_bulk_attendance, name='commit_bulk_attendance'),
     path('attendance/history/', views.attendance_history_report, name='attendance_history'),
     path('logistics/inventory/', views.inventory_asset_control_deck, name='inventory_deck'),
+    path('academic/post-homework/', views.post_homework_assignment, name='post_homework'),
     path('registry/staff/add/', views.staff_create, name='staff_create'),
     path('registry/staff/<int:staff_id>/edit/', views.staff_edit, name='staff_edit'),
     path('registry/staff/leave/', views.leave_management, name='leave_management'),

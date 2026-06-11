@@ -377,8 +377,79 @@ def financial_analytics(request):
 @login_required
 def teacher_sms_broadcast(request):
     if request.method == "POST":
-        messages.success(request, "System alert broadcast pushed safely to parent contacts.")
-    return render(request, "finance/teacher_broadcast.html")
+        message = request.POST.get("message", "").strip()
+        if not message:
+            messages.error(request, "Broadcast message cannot be empty.")
+            return redirect("teacher_sms_broadcast")
+        
+        import requests
+        import base64
+        
+        username = request.POST.get("username", "").strip()
+        api_key = request.POST.get("api_key", "").strip()
+        sender_id = request.POST.get("sender_id", "KABIERO").strip()
+        
+        if not username or not api_key:
+            messages.error(request, "Africa's Talking credentials required in session settings.")
+            return redirect("teacher_sms_broadcast")
+
+        recipients = request.POST.getlist("recipient_phone")
+        if not recipients:
+            messages.error(request, "No recipient phone numbers selected.")
+            return redirect("teacher_sms_broadcast")
+
+        url = "https://api.africastalking.com/version1/messaging"
+        auth_header = base64.b64encode(f"{username}:{api_key}".encode()).decode()
+        headers = {
+            "Authorization": f"Basic {auth_header}",
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
+        
+        success_count = 0
+        error_count = 0
+        for phone in recipients:
+            phone = phone.strip()
+            if not phone.startswith('+'):
+                phone = f"+254{phone.lstrip('0')}"
+            data = {
+                "username": username,
+                "to": phone,
+                "message": message[:160],
+                "from": sender_id,
+            }
+            try:
+                resp = requests.post(url, headers=headers, data=data, timeout=30)
+                result = resp.json()
+                if result.get("SMSMessageData", {}).get("Recipients"):
+                    success_count += 1
+                else:
+                    error_count += 1
+            except Exception:
+                error_count += 1
+        
+        if error_count == 0:
+            messages.success(request, f"Broadcast dispatched successfully to {success_count} parent contact(s).")
+        else:
+            messages.warning(request, f"Completed: {success_count} sent, {error_count} failed.")
+        return redirect("teacher_sms_broadcast")
+    
+    students = Student.objects.filter(is_active=True).select_related('class_stream')
+    recipients = []
+    seen = set()
+    for s in students:
+        phone = s.parent_phone.strip()
+        if phone and phone not in seen and len(phone) >= 10:
+            seen.add(phone)
+            recipients.append({
+                'student': s,
+                'phone': phone,
+                'guardian': s.guardian_name,
+            })
+    
+    return render(request, "finance/teacher_sms.html", {
+        "recipients": recipients,
+        "total_recipients": len(recipients),
+    })
 
 
 # =========================================================
@@ -472,8 +543,53 @@ def attendance_analytics(request):
 
 @login_required
 def inventory_asset_control_deck(request):
-    assets = SchoolAsset.objects.all()
-    return render(request, "finance/inventory.html", {"assets": assets})
+    assets = SchoolAsset.objects.all().order_by('category', 'name')
+    selected_category = request.GET.get('category', 'ALL')
+    if selected_category != 'ALL':
+        assets = assets.filter(category=selected_category)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'add':
+            SchoolAsset.objects.create(
+                name=request.POST.get('name', '').strip(),
+                serial_or_isbn=request.POST.get('serial', '').strip(),
+                category=request.POST.get('category', 'TEXTBOOKS'),
+                total_quantity=int(request.POST.get('total_qty', 1)),
+                available_quantity=int(request.POST.get('available_qty', 1)),
+                assigned_location=request.POST.get('location', '').strip(),
+                status=request.POST.get('status', 'OPERATIONAL'),
+            )
+            messages.success(request, "New asset registered successfully.")
+            return redirect('inventory_deck')
+        elif action == 'edit':
+            asset = get_object_or_404(SchoolAsset, id=request.POST.get('asset_id'))
+            asset.name = request.POST.get('name', '').strip()
+            asset.serial_or_isbn = request.POST.get('serial', '').strip()
+            asset.category = request.POST.get('category', 'TEXTBOOKS')
+            asset.total_quantity = int(request.POST.get('total_qty', 1))
+            asset.available_quantity = int(request.POST.get('available_qty', 1))
+            asset.assigned_location = request.POST.get('location', '').strip()
+            asset.status = request.POST.get('status', 'OPERATIONAL')
+            asset.save()
+            messages.success(request, f"Asset '{asset.name}' updated successfully.")
+            return redirect('inventory_deck')
+        elif action == 'delete':
+            asset = get_object_or_404(SchoolAsset, id=request.POST.get('asset_id'))
+            asset_name = asset.name
+            asset.delete()
+            messages.warning(request, f"'{asset_name}' has been removed from the inventory.")
+            return redirect('inventory_deck')
+    
+    maintenance_tickets = AssetMaintenanceLog.objects.filter(is_resolved=False).select_related('asset')
+    context = {
+        'assets': assets,
+        'selected_category': selected_category,
+        'maintenance_tickets': maintenance_tickets,
+        'total_operational': SchoolAsset.objects.filter(status='OPERATIONAL').count(),
+        'total_repair_flags': SchoolAsset.objects.filter(status='UNDER_REPAIR').count(),
+    }
+    return render(request, "finance/inventory_control_deck.html", context)
 
 
 # =========================================================
@@ -487,14 +603,115 @@ def academic_management_hub(request):
 
 @login_required
 def marks_entry_portal(request):
-    if request.method == "POST":
-        messages.success(request, "Examination score parameters compiled successfully.")
-    return render(request, "finance/marks_entry.html")
+    """Renders a streamlined spreadsheet matrix for fast term marks collection"""
+    subjects = Subject.objects.all().order_by('name')
+    streams = ClassStream.objects.all().order_by('name')
+    
+    selected_subject_id = request.GET.get('subject')
+    selected_stream_id = request.GET.get('stream')
+    term = request.GET.get('term', 'TERM_1')
+    year = int(request.GET.get('year', 2026))
+    
+    matrix_data = []
+    
+    if selected_subject_id and selected_stream_id:
+        students = Student.objects.filter(class_stream_id=selected_stream_id, is_active=True).order_by('last_name')
+        for student in students:
+            record = ExamRecord.objects.filter(student=student, subject_id=selected_subject_id, term=term, year=year).first()
+            matrix_data.append({
+                'student': student,
+                'cat_1': record.cat_1 if record else 0,
+                'cat_2': record.cat_2 if record else 0,
+                'final_exam': record.final_exam if record else 0,
+                'total_marks': record.total_marks if record else 0
+            })
+
+    if request.method == 'POST' and matrix_data:
+        saved_count = 0
+        for row in matrix_data:
+            student = row['student']
+            cat1 = request.POST.get(f'cat1_{student.id}', '0')
+            cat2 = request.POST.get(f'cat2_{student.id}', '0')
+            exam = request.POST.get(f'exam_{student.id}', '0')
+            
+            cat1 = max(0, min(30, int(cat1) if cat1.isdigit() else 0))
+            cat2 = max(0, min(30, int(cat2) if cat2.isdigit() else 0))
+            exam = max(0, min(40, int(exam) if exam.isdigit() else 0))
+            
+            ExamRecord.objects.update_or_create(
+                student=student,
+                subject_id=selected_subject_id,
+                term=term,
+                year=year,
+                defaults={
+                    'cat_1': cat1,
+                    'cat_2': cat2,
+                    'final_exam': exam
+                }
+            )
+            saved_count += 1
+        
+        messages.success(request, f"Examination score parameters compiled. {saved_count} records successfully saved.")
+        return redirect(f"{request.path}?subject={selected_subject_id}&stream={selected_stream_id}&term={term}&year={year}")
+
+    context = {
+        'subjects': subjects,
+        'streams': streams,
+        'matrix_data': matrix_data,
+        'selected_subject': int(selected_subject_id) if selected_subject_id else None,
+        'selected_stream': int(selected_stream_id) if selected_stream_id else None,
+        'selected_term': term,
+        'selected_year': year,
+    }
+    return render(request, "finance/marks_entry_portal.html", context)
 
 
 @login_required
 def generate_report_card_view(request, student_id):
-    return HttpResponse(f"System-generated PDF Statement Manifest for Learner Reference {student_id}")
+    """Aggregates scores and compiles an on-the-fly PDF Report Card for a specific student"""
+    from django.template.loader import render_to_string
+    
+    student = get_object_or_404(Student, id=student_id)
+    term = request.GET.get('term', 'TERM_1')
+    year = int(request.GET.get('year', 2026))
+    
+    exam_records = ExamRecord.objects.filter(student=student, term=term, year=year).select_related('subject')
+    
+    total_score = sum(r.total_marks for r in exam_records)
+    records_count = exam_records.count()
+    mean_score = (total_score / records_count) if records_count > 0 else 0.0
+    
+    if mean_score >= 80: mean_grade, remarks = 'A', 'Excellent performance. Keep it up.'
+    elif mean_score >= 70: mean_grade, remarks = 'B', 'Very good effort. Room for top tier.'
+    elif mean_score >= 50: mean_grade, remarks = 'C', 'Average achievement. Focus more on weak areas.'
+    else: mean_grade, remarks = 'D', 'Below expectation. Intensive remedial required.'
+
+    context = {
+        'student': student,
+        'exam_records': exam_records,
+        'total_score': total_score,
+        'mean_score': round(mean_score, 1),
+        'mean_grade': mean_grade,
+        'remarks': remarks,
+        'today': timezone.now(),
+        'term': term,
+        'year': year,
+    }
+    
+    try:
+        from weasyprint import HTML
+        html_string = render_to_string('finance/report_card_printout.html', context)
+        response = HttpResponse(content_type='application/pdf')
+        filename = f"report_card_{student.admission_number}_{term}_{year}.pdf"
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        HTML(string=html_string).write_pdf(response)
+        return response
+    except (ImportError, OSError) as e:
+        html_string = render_to_string('finance/report_card_printout.html', context)
+        response = HttpResponse(html_string, content_type='text/html')
+        response['Content-Disposition'] = f'inline; filename="report_card_{student.admission_number}_{term}_{year}.html"'
+        messages.info(request, "PDF engine unavailable - rendering print-friendly HTML. Use browser Print to save as PDF.")
+        return response
 
 
 # =========================================================
@@ -618,7 +835,71 @@ finance_registry_ledger = bursar_dashboard
 main_portal_home = bursar_dashboard
 public_school_website = bursar_dashboard
 staff_directory_matrix = bursar_dashboard
-academic_analytics_dashboard = bursar_dashboard
+
+
+@login_required
+def academic_analytics_dashboard(request):
+    """Aggregates exam fields across terms and monitors student performance trajectories"""
+    selected_term = request.GET.get('term', 'TERM_2')
+    year = int(request.GET.get('year', 2026))
+    
+    all_streams = ClassStream.objects.all()
+    stream_rankings = []
+    for stream in all_streams:
+        records = ExamRecord.objects.filter(student__class_stream=stream, term=selected_term, year=year).select_related('student', 'subject')
+        total_records = records.count()
+        if total_records > 0:
+            avg_score = sum(r.total_marks for r in records) / total_records
+        else:
+            avg_score = 0.0
+        student_count = Student.objects.filter(class_stream=stream, is_active=True).count()
+        stream_rankings.append({
+            'name': stream.name, 
+            'average': avg_score, 
+            'count': student_count
+        })
+    stream_rankings.sort(key=lambda x: x['average'], reverse=True)
+
+    all_subjects = Subject.objects.all()
+    subject_performance = []
+    for subject in all_subjects:
+        records = ExamRecord.objects.filter(subject=subject, term=selected_term, year=year).select_related('student')
+        total_records = records.count()
+        avg_score = sum(r.total_marks for r in records) / total_records if total_records > 0 else 0.0
+        subject_performance.append({'name': subject.name, 'code': subject.code, 'average': avg_score})
+    subject_performance.sort(key=lambda x: x['average'], reverse=True)
+
+    all_students = Student.objects.filter(is_active=True)
+    trajectory_list = []
+    
+    for s in all_students:
+        t1_records = ExamRecord.objects.filter(student=s, term='TERM_1', year=year).select_related('subject')
+        t2_records = ExamRecord.objects.filter(student=s, term='TERM_2', year=year).select_related('subject')
+        
+        t1_avg = sum(r.total_marks for r in t1_records) / t1_records.count() if t1_records.exists() else None
+        t2_avg = sum(r.total_marks for r in t2_records) / t2_records.count() if t2_records.exists() else None
+        
+        if t1_avg is not None and t2_avg is not None:
+            variance = t2_avg - t1_avg
+            if variance <= -5.0:
+                badge_class, icon, label = 'bg-danger', 'bi-graph-down-arrow', 'Slipping'
+            elif variance >= 5.0:
+                badge_class, icon, label = 'bg-success', 'bi-graph-up-arrow', 'Improving'
+            else:
+                badge_class, icon, label = 'bg-secondary', 'bi-arrow-right-short', 'Stable'
+                
+            trajectory_list.append({
+                'student': s, 't1_avg': t1_avg, 't2_avg': t2_avg,
+                'variance': variance, 'badge_class': badge_class, 'icon': icon, 'label': label
+            })
+    trajectory_list.sort(key=lambda x: x['variance'])
+
+    context = {
+        'term_display': selected_term.replace('_', ' '), 'selected_term': selected_term,
+        'stream_rankings': stream_rankings, 'subject_performance': subject_performance,
+        'trajectories': trajectory_list,
+    }
+    return render(request, "finance/analytics_dashboard.html", context)
 fee_defaulters_sms_portal = fee_defaulters_portal
 
 # Add these views to your finance/views.py file
@@ -807,4 +1088,43 @@ def leave_management(request):
     return render(request, "finance/leave_management.html", {
         "pending_leaves": pending,
         "approved_leaves": approved
+    })
+
+
+@login_required
+def post_homework_assignment(request):
+    subjects = Subject.objects.all().order_by('name')
+    streams = ClassStream.objects.all().order_by('name')
+    
+    if request.method == "POST":
+        stream_id = request.POST.get("stream")
+        subject_id = request.POST.get("subject")
+        title = request.POST.get("title", "").strip()
+        instructions = request.POST.get("instructions", "").strip()
+        deadline = request.POST.get("deadline")
+        
+        if not all([stream_id, subject_id, title, instructions, deadline]):
+            messages.error(request, "All fields are required to post an assignment.")
+            return redirect("post_homework")
+        
+        try:
+            stream = ClassStream.objects.get(id=stream_id)
+            subject = Subject.objects.get(id=subject_id)
+            HomeworkAssignment.objects.create(
+                stream=stream,
+                subject=subject,
+                title=title,
+                task_instructions=instructions,
+                submission_deadline=deadline
+            )
+            messages.success(request, f"Homework assignment '{title}' posted successfully to {stream.name}.")
+            return redirect("post_homework")
+        except Exception as e:
+            messages.error(request, f"Error posting assignment: {str(e)}")
+    
+    recent_assignments = HomeworkAssignment.objects.all().select_related('stream', 'subject').order_by('-date_given')[:10]
+    return render(request, "finance/post_homework.html", {
+        "subjects": subjects,
+        "streams": streams,
+        "recent_assignments": recent_assignments,
     })

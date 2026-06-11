@@ -14,12 +14,16 @@
         </div>
         
         <!-- Category Filter Chips -->
-        <div class="btn-group shadow-sm bg-white border p-1 rounded-3">
+        <div class="btn-group shadow-sm bg-white border p-1 rounded-3 me-2">
             <a href="?category=ALL" class="btn btn-sm {% if selected_category == 'ALL' %}btn-dark{% else %}btn-link text-dark text-decoration-none{% endif %} fw-medium rounded-2">Show All Property</a>
             <a href="?category=TEXTBOOKS" class="btn btn-sm {% if selected_category == 'TEXTBOOKS' %}btn-dark{% else %}btn-link text-dark text-decoration-none{% endif %} fw-medium rounded-2">Textbooks</a>
             <a href="?category=LAB_EQUIP" class="btn btn-sm {% if selected_category == 'LAB_EQUIP' %}btn-dark{% else %}btn-link text-dark text-decoration-none{% endif %} fw-medium rounded-2">Lab & Computers</a>
             <a href="?category=FURNITURE" class="btn btn-sm {% if selected_category == 'FURNITURE' %}btn-dark{% else %}btn-link text-dark text-decoration-none{% endif %} fw-medium rounded-2">Furniture</a>
+            <a href="?category=STORES" class="btn btn-sm {% if selected_category == 'STORES' %}btn-dark{% else %}btn-link text-dark text-decoration-none{% endif %} fw-medium rounded-2">General Stores</a>
         </div>
+        <button class="btn btn-sm btn-dark rounded-3 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal" style="background-color: #1B4332; border: none;">
+            <i class="bi bi-plus-lg me-1"></i> Add New Asset
+        </button>
     </div>
 
     <!-- Quick Count Telemetry Status Cards -->
@@ -65,60 +69,30 @@
                                 <th class="text-center">Available Stock</th>
                                 <th class="text-end">Asset Status</th>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in assets %}
-                            <tr class="border-bottom">
-                                <td class="py-2.5">
-                                    <strong class="text-dark d-block mb-0">{{ item.name }}</strong>
-                                    <span class="badge bg-light text-secondary border mt-0.5" style="font-size:0.7rem;">{{ item.get_category_display }}</span>
-                                </td>
-                                <td><code class="fw-bold font-monospace text-primary" style="font-size:0.8rem;">{{ item.serial_or_isbn }}</code></td>
-                                <td class="text-secondary small"><i class="bi bi-geo-alt me-1"></i>{{ item.assigned_location }}</td>
-                                <td class="text-center font-monospace fw-bold">{{ item.available_quantity }} / {{ item.total_quantity }}</td>
-                                <td class="text-end">
-                                    {% if item.status == 'OPERATIONAL' %}
-                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill border border-success border-opacity-10 px-2 py-1">Operational</span>
-                                        <!-- Mini Pop-up Trigger for Reporting Damage/Repairs -->
-                                        <button class="btn btn-xs btn-link p-0 text-warning ms-2 text-decoration-none font-weight-bold" data-bs-toggle="modal" data-bs-target="#repairModal{{ item.id }}" style="font-size:0.75rem;"><i class="bi bi-wrench"></i> Fix</button>
-                                    {% else %}
-                                        <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill border border-warning border-opacity-10 px-2 py-1">In Workshop</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-
-                            <!-- Maintenance Modal Dialog Form Overlay -->
-                            <div class="modal fade" id="repairModal{{ item.id }}" timezone="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <form method="POST" action="" class="modal-content">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="asset_id" value="{{ item.id }}">
-                                        <input type="hidden" name="log_repair" value="1">
-                                        <div class="modal-header bg-light">
-                                            <h6 class="modal-title fw-bold text-dark"><i class="bi bi-wrench-adjustable text-warning me-2"></i>Log Property Damage Ticket</h6>
-                                            <button type="button" class="btn-close" data-bs-dismiss="alert" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <p class="small text-muted mb-3">Asset: <strong>{{ item.name }}</strong> ({{ item.serial_or_isbn }})</p>
-                                            <div class="mb-3">
-                                                <label class="form-label small fw-bold text-secondary">Nature of Damage or Malfunction</label>
-                                                <textarea name="issue_reported" class="form-control text-sm" placeholder="e.g., Cracked screen terminal, Missing locker hinges..." rows="3" required></textarea>
-                                            </div>
-                                            <div class="mb-2">
-                                                <label class="form-label small fw-bold text-secondary">Estimated Repair Cost Budget (KES)</label>
-                                                <input type="number" name="cost_kes" class="form-control font-monospace" placeholder="0.00" step="0.01">
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer bg-light">
-                                            <button type="submit" class="btn btn-sm btn-dark px-4 font-weight-bold">Dispatch to Workshop</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-
-                            {% empty %}
-                            <tr><td colspan="5" class="text-center text-muted py-4">No logged school property item profiles matching search configurations.</td></tr>
-                            {% endfor %}
+                            </thead>
+                            <tbody>
+                                {% for item in assets %}
+                                <tr class="border-bottom">
+                                    <td class="py-2.5">
+                                        <strong class="text-dark d-block mb-0">{{ item.name }}</strong>
+                                        <span class="badge bg-light text-secondary border mt-0.5" style="font-size:0.7rem;">{{ item.get_category_display }}</span>
+                                    </td>
+                                    <td><code class="fw-bold font-monospace text-primary" style="font-size:0.8rem;">{{ item.serial_or_isbn }}</code></td>
+                                    <td class="text-secondary small"><i class="bi bi-geo-alt me-1"></i>{{ item.assigned_location }}</td>
+                                    <td class="text-center font-monospace fw-bold">{{ item.available_quantity }} / {{ item.total_quantity }}</td>
+                                    <td class="text-end">
+                                        {% if item.status == 'OPERATIONAL' %}
+                                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill border border-success border-opacity-10 px-2 py-1">Operational</span>
+                                        {% else %}
+                                            <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill border border-warning border-opacity-10 px-2 py-1">In Workshop</span>
+                                        {% endif %}
+                                        <button class="btn btn-xs btn-outline-primary ms-1 p-1 rounded-2" data-bs-toggle="modal" data-bs-target="#editModal{{ item.id }}" title="Edit" style="font-size:0.7rem;"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-xs btn-outline-danger ms-1 p-1 rounded-2" data-bs-toggle="modal" data-bs-target="#deleteModal{{ item.id }}" title="Delete" style="font-size:0.7rem;"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="6" class="text-center text-muted py-4">No logged school property item profiles matching search configurations.</td></tr>
+                                {% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -149,5 +123,150 @@
         </div>
 
     </div>
+    
+    <!-- Add Asset Modal -->
+    <div class="modal fade" id="addAssetModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <form method="POST" action="" class="modal-content">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add">
+                <div class="modal-header bg-dark text-white">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i>Register New School Asset</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-secondary">Asset Name</label>
+                            <input type="text" name="name" class="form-control" placeholder="e.g., Oxford KLB Mathematics Form 1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-secondary">Serial / ISBN</label>
+                            <input type="text" name="serial" class="form-control" placeholder="e.g., 9780198425113" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-secondary">Category</label>
+                            <select name="category" class="form-select">
+                                <option value="TEXTBOOKS">Textbook Inventory</option>
+                                <option value="LAB_EQUIP">Computer & Lab Equipment</option>
+                                <option value="FURNITURE">School Furniture Property</option>
+                                <option value="STORES">General Store Supplies</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-secondary">Total Quantity</label>
+                            <input type="number" name="total_qty" class="form-control" value="1" min="1">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-secondary">Available Quantity</label>
+                            <input type="number" name="available_qty" class="form-control" value="1" min="0">
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold text-secondary">Assigned Location</label>
+                            <input type="text" name="location" class="form-control" placeholder="e.g., Science Lab B, Form 2 Alpha Room">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-secondary">Status</label>
+                            <select name="status" class="form-select">
+                                <option value="OPERATIONAL">Operational / Active</option>
+                                <option value="UNDER_REPAIR">Under Maintenance</option>
+                                <option value="DECOMMISSIONED">Decommissioned / Written Off</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-dark px-4 fw-bold">Register Asset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Asset Modal -->
+    {% for item in assets %}
+    <div class="modal fade" id="editModal{{ item.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <form method="POST" action="" class="modal-content">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="asset_id" value="{{ item.id }}">
+                <div class="modal-header bg-primary text-white">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Edit Asset Record</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-secondary">Asset Name</label>
+                            <input type="text" name="name" class="form-control" value="{{ item.name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-secondary">Serial / ISBN</label>
+                            <input type="text" name="serial" class="form-control" value="{{ item.serial_or_isbn }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-secondary">Category</label>
+                            <select name="category" class="form-select">
+                                <option value="TEXTBOOKS" {% if item.category == 'TEXTBOOKS' %}selected{% endif %}>Textbook Inventory</option>
+                                <option value="LAB_EQUIP" {% if item.category == 'LAB_EQUIP' %}selected{% endif %}>Computer & Lab Equipment</option>
+                                <option value="FURNITURE" {% if item.category == 'FURNITURE' %}selected{% endif %}>School Furniture Property</option>
+                                <option value="STORES" {% if item.category == 'STORES' %}selected{% endif %}>General Store Supplies</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-secondary">Total Quantity</label>
+                            <input type="number" name="total_qty" class="form-control" value="{{ item.total_quantity }}" min="1">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-secondary">Available Quantity</label>
+                            <input type="number" name="available_qty" class="form-control" value="{{ item.available_quantity }}" min="0">
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold text-secondary">Assigned Location</label>
+                            <input type="text" name="location" class="form-control" value="{{ item.assigned_location }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-secondary">Status</label>
+                            <select name="status" class="form-select">
+                                <option value="OPERATIONAL" {% if item.status == 'OPERATIONAL' %}selected{% endif %}>Operational / Active</option>
+                                <option value="UNDER_REPAIR" {% if item.status == 'UNDER_REPAIR' %}selected{% endif %}>Under Maintenance</option>
+                                <option value="DECOMMISSIONED" {% if item.status == 'DECOMMISSIONED' %}selected{% endif %}>Decommissioned / Written Off</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary px-4 fw-bold">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Delete Confirmation Modal -->
+    {% for item in assets %}
+    <div class="modal fade" id="deleteModal{{ item.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <form method="POST" action="" class="modal-content">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="asset_id" value="{{ item.id }}">
+                <div class="modal-header bg-danger text-white">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle me-2"></i>Confirm Deletion</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-0">Are you sure you want to permanently remove <strong>{{ item.name }}</strong> from the inventory? This cannot be undone.</p>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-danger px-4 fw-bold">Delete Forever</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}
