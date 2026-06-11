@@ -1034,7 +1034,7 @@ def staff_create(request):
             base_salary_kes=base_salary
         )
         messages.success(request, "Staff record initialized successfully.")
-        return redirect("staff_management")
+        return redirect("staff_management_matrix")
 
     return render(request, "finance/staff_form.html", {
         "subjects": subjects,
@@ -1061,7 +1061,7 @@ def staff_edit(request, staff_id):
         profile.current_status = data.get("status", profile.current_status)
         profile.save()
         messages.success(request, "Staff profile updated successfully.")
-        return redirect("staff_management")
+        return redirect("staff_management_matrix")
     return render(request, "finance/staff_form.html", {
         "subjects": subjects,
         "mode": "edit",
