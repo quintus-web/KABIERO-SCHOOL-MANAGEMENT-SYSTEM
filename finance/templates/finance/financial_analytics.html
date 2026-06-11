@@ -1,0 +1,206 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Financial Analytics - Crescent Heights Academy{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">Financial Analytics Dashboard</h3>
+        <p class="text-muted small text-uppercase fw-semibold mb-0">Revenue tracking, defaulters, and collection intelligence</p>
+    </div>
+    <form method="GET" action="" class="d-flex gap-2 flex-wrap">
+        <select name="term" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="ALL" {% if term == 'ALL' %}selected{% endif %}>All Terms</option>
+            <option value="TERM_1" {% if term == 'TERM_1' %}selected{% endif %}>Term 1</option>
+            <option value="TERM_2" {% if term == 'TERM_2' %}selected{% endif %}>Term 2</option>
+            <option value="TERM_3" {% if term == 'TERM_3' %}selected{% endif %}>Term 3</option>
+        </select>
+        <select name="level" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">All Levels</option>
+            {% for lvl in levels %}
+            <option value="{{ lvl }}" {% if level_filter == lvl %}selected{% endif %}>{{ lvl }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card bg-white border p-3 h-100">
+            <span class="text-muted small text-uppercase fw-bold" style="font-size:0.68rem;">Total Expected</span>
+            <h2 class="fw-bold text-dark mb-0 font-monospace">KES {{ expected|floatformat:0 }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success bg-opacity-10 border-success border p-3 h-100">
+            <span class="text-success small text-uppercase fw-bold">Collected</span>
+            <h2 class="fw-bold text-success mb-0 font-monospace">KES {{ collected|floatformat:0 }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger bg-opacity-10 border-danger border p-3 h-100">
+            <span class="text-danger small text-uppercase fw-bold">Outstanding</span>
+            <h2 class="fw-bold text-danger mb-0 font-monospace">KES {{ outstanding|floatformat:0 }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary bg-opacity-10 border-primary border p-3 h-100">
+            <span class="text-primary small text-uppercase fw-bold">Collection Rate</span>
+            <h2 class="fw-bold text-primary mb-0 font-monospace">{{ collection_rate }}%</h2>
+            <div class="progress mt-2" style="height: 6px;">
+                <div class="progress-bar bg-primary" style="width: {{ collection_rate }}%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Stream Breakdown -->
+    <div class="col-lg-6">
+        <div class="card card-custom p-4 bg-white shadow-sm border-0 h-100">
+            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-collection-play me-2 text-primary"></i>Collection by Stream</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Stream</th>
+                            <th class="text-end">Expected</th>
+                            <th class="text-end">Collected</th>
+                            <th class="text-end">Outstanding</th>
+                            <th class="text-center">Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in stream_breakdown %}
+                        <tr class="border-bottom">
+                            <td class="fw-semibold text-dark">{{ row.level }}</td>
+                            <td class="text-end font-monospace small">{{ row.expected|floatformat:0 }}</td>
+                            <td class="text-end font-monospace small text-success">{{ row.collected|floatformat:0 }}</td>
+                            <td class="text-end font-monospace small text-danger">{{ row.outstanding|floatformat:0 }}</td>
+                            <td class="text-center">
+                                <span class="badge {% if row.rate >= 80 %}bg-success{% elif row.rate >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %} rounded-pill px-2">
+                                    {{ row.rate }}%
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center text-muted py-3">No stream data available</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Term-wise Comparison -->
+    <div class="col-lg-6">
+        <div class="card card-custom p-4 bg-white shadow-sm border-0 h-100">
+            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-calendar3 me-2 text-warning"></i>Term-wise Collections</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Term</th>
+                            <th class="text-end">Expected</th>
+                            <th class="text-end">Collected</th>
+                            <th class="text-end">Outstanding</th>
+                            <th class="text-center">Progress</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in term_data %}
+                        <tr class="border-bottom">
+                            <td class="fw-semibold text-dark">{{ t.term|title }}</td>
+                            <td class="text-end font-monospace small">{{ t.expected|floatformat:0 }}</td>
+                            <td class="text-end font-monospace small text-success">{{ t.collected|floatformat:0 }}</td>
+                            <td class="text-end font-monospace small text-danger">{{ t.outstanding|floatformat:0 }}</td>
+                            <td class="text-center">
+                                <span class="badge {% if t.rate >= 80 %}bg-success{% elif t.rate >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %} rounded-pill px-2">
+                                    {{ t.rate }}%
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Channels -->
+    <div class="col-lg-6">
+        <div class="card card-custom p-4 bg-white shadow-sm border-0 h-100">
+            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-credit-card me-2 text-success"></i>Payment Methods</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Channel</th>
+                            <th class="text-center">Transactions</th>
+                            <th class="text-end">Amount (KES)</th>
+                            <th class="text-center">Share</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set total_collected = collected %}
+                        {% for ch in payment_channels %}
+                        <tr class="border-bottom">
+                            <td class="fw-semibold text-dark">
+                                {% if ch.channel == 'MPESA' %}<i class="bi bi-phone me-1 text-primary"></i>M-Pesa
+                                {% elif ch.channel == 'BANK' %}<i class="bi bi-bank me-1 text-success"></i>Bank Transfer
+                                {% else %}<i class="bi bi-cash me-1 text-warning"></i>Cash{% endif %}
+                            </td>
+                            <td class="text-center">{{ ch.count }}</td>
+                            <td class="text-end font-monospace fw-bold text-dark">{{ ch.total|floatformat:0 }}</td>
+                            <td class="text-center">
+                                {% set share = (ch.total / total_collected * 100) if total_collected else 0 %}
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-grow-1" style="height: 6px; min-width: 50px;">
+                                        <div class="progress-bar bg-secondary" style="width: {{ share }}%;"></div>
+                                    </div>
+                                    <span class="small font-monospace text-muted">{{ share|floatformat:0 }}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-3">No payments received yet</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Defaulters -->
+    <div class="col-lg-6">
+        <div class="card card-custom p-4 bg-white shadow-sm border-0 h-100">
+            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-exclamation-triangle me-2 text-danger"></i>Fee Defaulters</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Adm No</th>
+                            <th>Student</th>
+                            <th>Stream</th>
+                            <th class="text-end">Balance (KES)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in defaulter_data %}
+                        <tr class="border-bottom">
+                            <td class="font-monospace small text-secondary">{{ d.adm }}</td>
+                            <td class="fw-semibold text-dark">{{ d.name }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ d.stream }}</span></td>
+                            <td class="text-end font-monospace fw-bold text-danger">{{ d.balance|floatformat:0 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-3">No outstanding balances — all cleared!</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

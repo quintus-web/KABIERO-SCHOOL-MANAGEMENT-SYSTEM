@@ -14,6 +14,7 @@ urlpatterns = [
     path('registry/faculty/', views.faculty_directory, name='faculty_directory'),
     path('treasury/ledger/', views.bursar_dashboard, name='bursar_dashboard'),
     path('treasury/fee-structure/', views.fee_structure, name='fee_structure'),
+    path('treasury/analytics/', views.financial_analytics, name='financial_analytics'),
     path('treasury/statement/<int:student_id>/', views.student_account_statement, name='student_statement'),
     path('treasury/collect-fees/<int:student_id>/', views.collect_fee_payment, name='collect_fee_payment'),
     path('treasury/defaulters-sms/', views.fee_defaulters_portal, name='fee_defaulters_portal'),

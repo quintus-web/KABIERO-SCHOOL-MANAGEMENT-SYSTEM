@@ -276,6 +276,100 @@ def fee_structure(request):
     })
 
 
+@login_required
+def financial_analytics(request):
+    from collections import defaultdict
+    from django.db.models import Sum, Count, Q, F
+    import json
+
+    term = request.GET.get("term", "TERM_1")
+    level_filter = request.GET.get("level", "")
+
+    students_qs = Student.objects.filter(status='ACTIVE')
+    if level_filter:
+        students_qs = students_qs.filter(class_stream__name=level_filter)
+
+    all_invoices = FeeInvoice.objects.all()
+    all_receipts = FeeReceipt.objects.all()
+
+    if term and term != "ALL":
+        all_invoices = all_invoices.filter(term=term)
+        all_receipts = all_receipts.filter(invoice__term=term)
+
+    if level_filter:
+        all_invoices = all_invoices.filter(student__class_stream__name=level_filter)
+        all_receipts = all_receipts.filter(student__class_stream__name=level_filter)
+
+    levels = sorted(set(Student.objects.exclude(class_stream__isnull=True).values_list('class_stream__name', flat=True)))
+
+    expected = float(all_invoices.aggregate(total=Sum('amount'))['total'] or 0)
+    collected = float(all_receipts.aggregate(total=Sum('amount'))['total'] or 0)
+    outstanding = expected - collected
+    collection_rate = round((collected / expected) * 100, 1) if expected else 0.0
+
+    stream_breakdown = []
+    for lvl in levels:
+        lvl_students = students_qs.filter(class_stream__name=lvl)
+        lvl_expected = float(all_invoices.filter(student__class_stream__name=lvl).aggregate(total=Sum('amount'))['total'] or 0)
+        lvl_collected = float(all_receipts.filter(student__class_stream__name=lvl).aggregate(total=Sum('amount'))['total'] or 0)
+        lvl_outstanding = lvl_expected - lvl_collected
+        stream_breakdown.append({
+            'level': lvl,
+            'students': lvl_students.count(),
+            'expected': lvl_expected,
+            'collected': lvl_collected,
+            'outstanding': lvl_outstanding,
+            'rate': round((lvl_collected / lvl_expected) * 100, 1) if lvl_expected else 0.0
+        })
+
+    term_data = []
+    for t in ['TERM_1', 'TERM_2', 'TERM_3']:
+        t_exp = float(FeeInvoice.objects.filter(term=t).aggregate(total=Sum('amount'))['total'] or 0)
+        t_col = float(FeeReceipt.objects.filter(invoice__term=t).aggregate(total=Sum('amount'))['total'] or 0)
+        term_data.append({
+            'term': t,
+            'expected': t_exp,
+            'collected': t_col,
+            'outstanding': t_exp - t_col,
+            'rate': round((t_col / t_exp) * 100, 1) if t_exp else 0.0
+        })
+
+    defaulters = Student.objects.filter(current_balance__gt=0).order_by('-current_balance')[:50]
+    defaulter_data = []
+    for s in defaulters:
+        defaulter_data.append({
+            'student': s,
+            'balance': float(s.current_balance),
+            'stream': s.class_stream.name if s.class_stream else 'Unassigned',
+            'adm': s.admission_number,
+            'name': f"{s.first_name} {s.last_name}"
+        })
+
+    payment_channels = []
+    channel_qs = all_receipts.values('payment_channel').annotate(total=Sum('amount'), count=Count('id'))
+    for ch in channel_qs:
+        payment_channels.append({
+            'channel': ch['payment_channel'] or 'CASH',
+            'total': float(ch['total'] or 0),
+            'count': ch['count']
+        })
+
+    return render(request, "finance/financial_analytics.html", {
+        "term": term,
+        "level_filter": level_filter,
+        "levels": levels,
+        "expected": expected,
+        "collected": collected,
+        "outstanding": outstanding,
+        "collection_rate": collection_rate,
+        "stream_breakdown": stream_breakdown,
+        "term_data": term_data,
+        "defaulter_data": defaulter_data,
+        "payment_channels": payment_channels,
+        "current_page": "analytics"
+    })
+
+
 # =========================================================
 # 5. INTEGRATED BROADCASTER & COMMUNICATORS
 # =========================================================

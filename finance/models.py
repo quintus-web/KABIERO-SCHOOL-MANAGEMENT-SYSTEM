@@ -114,9 +114,12 @@ class ExamRecord(models.Model):
         return self.cat_1 + self.cat_2 + self.final_exam
 
 class FeeInvoice(models.Model):
+    TERM_CHOICES = [('TERM_1', 'Term 1'), ('TERM_2', 'Term 2'), ('TERM_3', 'Term 3')]
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='fee_invoices')
     title = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
+    term = models.CharField(max_length=10, choices=TERM_CHOICES, default='TERM_1')
+    year = models.IntegerField(default=2026)
     date_issued = models.DateField(auto_now_add=True)
     description = models.TextField(blank=True, null=True)
 
@@ -125,6 +128,7 @@ class FeeInvoice(models.Model):
 
 class FeeReceipt(models.Model):
     STATUS_CHOICES = [('COMPLETED', 'Completed'), ('PENDING', 'Pending Verification'), ('FAILED', 'Failed')]
+    PAYMENT_CHANNELS = [('MPESA', 'M-Pesa'), ('CASH', 'Cash'), ('BANK', 'Bank Transfer')]
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='fee_receipts')
     invoice = models.ForeignKey(FeeInvoice, on_delete=models.SET_NULL, null=True, blank=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
@@ -132,6 +136,7 @@ class FeeReceipt(models.Model):
     date_issued = models.DateTimeField(default=timezone.now)
     reference_code = models.CharField(max_length=50, unique=True)
     description = models.CharField(max_length=255, default="School Fees Payment")
+    payment_channel = models.CharField(max_length=20, choices=PAYMENT_CHANNELS, default='CASH')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='COMPLETED')
 
     def __str__(self):
