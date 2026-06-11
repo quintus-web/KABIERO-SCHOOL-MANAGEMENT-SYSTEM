@@ -1073,7 +1073,25 @@ def staff_edit(request, staff_id):
 def leave_management(request):
     pending = LeaveApplication.objects.filter(is_approved=False).select_related('staff__user').order_by('-id')
     approved = LeaveApplication.objects.filter(is_approved=True).select_related('staff__user').order_by('-id')[:50]
+    
     if request.method == "POST":
+        if "submit_leave" in request.POST:
+            staff, _ = StaffProfile.objects.get_or_create(user=request.user, defaults={"employee_number": f"EMP/{request.user.id}", "role_designation": "TEACHER"})
+            reason = request.POST.get("leave_reason", "").strip()
+            start = request.POST.get("start_date", "")
+            end = request.POST.get("end_date", "")
+            if reason and start and end:
+                LeaveApplication.objects.create(
+                    staff=staff,
+                    leave_reason=reason,
+                    start_date=start,
+                    end_date=end
+                )
+                messages.success(request, "Leave request submitted for approval.")
+            else:
+                messages.error(request, "All leave fields are required.")
+            return redirect("leave_management")
+        
         action = request.POST.get("action")
         leave_id = request.POST.get("leave_id")
         leave = get_object_or_404(LeaveApplication, id=leave_id)
@@ -1085,6 +1103,7 @@ def leave_management(request):
             leave.delete()
             messages.warning(request, "Leave application rejected and removed.")
         return redirect("leave_management")
+    
     return render(request, "finance/leave_management.html", {
         "pending_leaves": pending,
         "approved_leaves": approved

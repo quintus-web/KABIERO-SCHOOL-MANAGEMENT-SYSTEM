@@ -17,6 +17,30 @@
 </div>
 
 <div class="card card-custom border bg-white shadow-sm p-4 mb-4">
+    <h6 class="fw-bold text-primary mb-3"><i class="bi bi-calendar-plus me-2"></i>Submit New Leave Request</h6>
+    <form method="POST" class="row g-3">
+        {% csrf_token %}
+        <div class="col-md-4">
+            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.72rem;">Leave Reason</label>
+            <input type="text" name="leave_reason" class="form-control" placeholder="e.g., Sick leave, Maternity..." required>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.72rem;">Start Date</label>
+            <input type="date" name="start_date" class="form-control" required>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.72rem;">End Date</label>
+            <input type="date" name="end_date" class="form-control" required>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" name="submit_leave" class="btn btn-dark w-100 fw-bold" style="background-color: #1B4332; border: none;">
+                <i class="bi bi-send me-1"></i> Submit
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card card-custom border bg-white shadow-sm p-4 mb-4">
     <h6 class="fw-bold text-warning mb-3"><i class="bi bi-hourglass-split me-2"></i>Pending Requests</h6>
     <div class="table-responsive">
         <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.9rem;">
