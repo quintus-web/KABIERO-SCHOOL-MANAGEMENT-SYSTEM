@@ -105,8 +105,6 @@ class Command(BaseCommand):
                     FeeInvoice.objects.get_or_create(
                         student=student,
                         title=f"{stream_name} Term 1 Fees 2026",
-                        year=2026,
-                        term='TERM_1',
                         defaults={
                             'amount': opening_balance,
                             'description': f"Auto-generated from Crescent Heights Fee Structure 2026 for {stream_name}"
