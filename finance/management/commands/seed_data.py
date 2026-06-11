@@ -3,7 +3,7 @@ import os
 import csv
 from decimal import Decimal
 from django.core.management.base import BaseCommand
-from finance.models import Student, ClassStream, Subject, FeeStructure
+from finance.models import Student, ClassStream, Subject, FeeStructure, FeeInvoice
 
 class Command(BaseCommand):
     help = "Parses the master school CSV dataset and seeds the SQLite database tables seamlessly."
@@ -60,6 +60,7 @@ class Command(BaseCommand):
 
             student_count = 0
             stream_count = 0
+            invoice_count = 0
 
             for row in reader:
                 if not row or len(row) < 6:
@@ -82,9 +83,10 @@ class Command(BaseCommand):
                 if created:
                     stream_count += 1
 
-                opening_balance = term_fee_map.get(stream_name, {}).get('TERM_1', Decimal("0.00"))
+                term_fees = term_fee_map.get(stream_name, {'TERM_1': Decimal("0.00")})
+                opening_balance = term_fees.get('TERM_1', Decimal("0.00"))
 
-                Student.objects.update_or_create(
+                student, created = Student.objects.update_or_create(
                     admission_number=adm_no,
                     defaults={
                         'first_name': first_name,
@@ -96,8 +98,22 @@ class Command(BaseCommand):
                         'current_balance': opening_balance
                     }
                 )
-                student_count += 1
+                if created:
+                    student_count += 1
+
+                if created and opening_balance > 0:
+                    FeeInvoice.objects.get_or_create(
+                        student=student,
+                        title=f"{stream_name} Term 1 Fees 2026",
+                        year=2026,
+                        term='TERM_1',
+                        defaults={
+                            'amount': opening_balance,
+                            'description': f"Auto-generated from Crescent Heights Fee Structure 2026 for {stream_name}"
+                        }
+                    )
+                    invoice_count += 1
 
         self.stdout.write(self.style.SUCCESS(
-            f"Milestone 1 Complete! Successfully provisioned {stream_count} new class streams and injected {student_count} student profile tables."
+            f"Milestone 1 Complete! {stream_count} streams, {student_count} students, {invoice_count} invoices."
         ))

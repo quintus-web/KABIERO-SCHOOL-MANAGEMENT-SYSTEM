@@ -13,6 +13,7 @@ urlpatterns = [
     path('registry/staff-matrix/', views.staff_management_matrix, name='staff_management_matrix'),
     path('registry/faculty/', views.faculty_directory, name='faculty_directory'),
     path('treasury/ledger/', views.bursar_dashboard, name='bursar_dashboard'),
+    path('treasury/fee-structure/', views.fee_structure, name='fee_structure'),
     path('treasury/statement/<int:student_id>/', views.student_account_statement, name='student_statement'),
     path('treasury/collect-fees/<int:student_id>/', views.collect_fee_payment, name='collect_fee_payment'),
     path('treasury/defaulters-sms/', views.fee_defaulters_portal, name='fee_defaulters_portal'),

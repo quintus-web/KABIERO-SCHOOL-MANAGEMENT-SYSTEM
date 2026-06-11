@@ -1,0 +1,52 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Fee Structure - Crescent Heights Academy{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">Fee Structure 2026</h3>
+        <p class="text-muted small text-uppercase fw-semibold mb-0">Official Crescent Heights Academy fee schedule</p>
+    </div>
+    <div class="card bg-white border-0 shadow-sm px-4 py-3" style="border-radius: 12px;">
+        <span class="text-muted small text-uppercase fw-bold d-block" style="font-size: 0.68rem;">Academic Year</span>
+        <span class="fw-bold text-dark fs-5">2026</span>
+    </div>
+</div>
+
+<div class="card card-custom">
+    <div class="table-responsive">
+        <table class="table table-custom table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-4">Level</th>
+                    <th class="text-center">Term 1 (KES)</th>
+                    <th class="text-center">Term 2 (KES)</th>
+                    <th class="text-center">Term 3 (KES)</th>
+                    <th class="text-end pe-4">Annual Total (KES)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for level in levels %}
+                <tr class="border-bottom">
+                    <td class="ps-4 fw-bold text-dark">{{ level }}</td>
+                    <td class="text-center font-monospace fw-bold text-primary">{{ grouped[level].TERM_1|floatformat:0 }}</td>
+                    <td class="text-center font-monospace">{{ grouped[level].TERM_2|floatformat:0 }}</td>
+                    <td class="text-center font-monospace">{{ grouped[level].TERM_3|floatformat:0 }}</td>
+                    <td class="text-end pe-4 font-monospace fw-bold text-dark">{{ grouped[level].TERM_1|add:grouped[level].TERM_2|add:grouped[level].TERM_3|floatformat:0 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-muted">
+                        <div class="py-4">
+                            <i class="bi bi-receipt text-muted mb-3 d-block" style="font-size: 3rem;"></i>
+                            <h5 class="fw-bold text-dark mb-1">No fee schedules configured</h5>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

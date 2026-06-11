@@ -230,11 +230,13 @@ def collect_fee_payment(request, student_id):
 
         open_invoice = FeeInvoice.objects.filter(student=student).order_by('date_issued').first()
         if not open_invoice:
+            fee_entry = FeeStructure.objects.filter(level=student.class_stream.name).first()
+            invoice_amount = fee_entry.amount if fee_entry else Decimal("0.00")
             open_invoice = FeeInvoice.objects.create(
                 student=student,
-                title="Term 1 Tuition Fee",
-                amount=Decimal("45000.00"),
-                description="Default term invoice generated at first payment collection"
+                title=f"{student.class_stream.name} Term 1 Invoice 2026",
+                amount=invoice_amount,
+                description="Auto-generated from Crescent Heights Fee Structure 2026"
             )
 
         FeeReceipt.objects.create(
@@ -259,6 +261,19 @@ def fee_defaulters_portal(request):
     if request.method == "POST":
         messages.success(request, "Outstanding debt notification arrays dispatched.")
     return render(request, "finance/defaulters.html")
+
+
+@login_required
+def fee_structure(request):
+    schedules = FeeStructure.objects.all().order_by('level', 'term')
+    levels = sorted(FeeStructure.objects.values_list('level', flat=True).distinct())
+    grouped = {}
+    for sched in schedules:
+        grouped.setdefault(sched.level, {})[sched.term] = sched.amount
+    return render(request, "finance/fee_structure.html", {
+        "grouped": grouped,
+        "levels": levels
+    })
 
 
 # =========================================================
