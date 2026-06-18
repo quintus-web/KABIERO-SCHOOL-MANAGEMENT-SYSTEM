@@ -44,7 +44,7 @@
                     <td>
                         <span class="fw-semibold text-slate-900 d-block" style="color: #0f172a;">{{ item.first_name }} {{ item.last_name }}</span>
                     </td>
-                    <td><span class="badge bg-light text-dark border px-2.5 py-1.5 rounded-3 fw-medium small">{{ item.class_stream.name }}</span></td>
+                    <td><span class="badge bg-light text-dark border px-2.5 py-1.5 rounded-3 fw-medium small">{% if item.class_stream %}{{ item.class_stream.name }}{% else %}Unassigned{% endif %}</span></td>
                     <td class="text-end fw-bold">
                         {% if item.current_balance > 0 %}
                             <span class="text-danger">KES {{ item.current_balance|floatformat:2 }}</span>

@@ -1588,21 +1588,24 @@ def global_attendance_control_deck(request):
     today = datetime.date.today()
     
     if request.method == 'POST' and 'toggle_attendance' in request.POST:
-        record_id = request.POST.get('record_id')
-        record_type = request.POST.get('type')
-        new_status = request.POST.get('new_status')
-        
-        if record_type == 'STUDENT':
-            rec = StudentAttendanceRecord.objects.get(id=record_id)
-            rec.status = new_status
-            rec.save()
-            if new_status == 'ABSENT':
-                messages.warning(request, f"SMS alert staged for parent of {rec.student.first_name} ({rec.student.parent_phone})")
-        elif record_type == 'TEACHER':
-            rec = TeacherAttendanceRecord.objects.get(id=record_id)
-            rec.status = new_status
-            rec.save()
-        return redirect('attendance_deck')
+        try:
+            record_id = request.POST.get('record_id')
+            record_type = request.POST.get('type')
+            new_status = request.POST.get('new_status')
+            
+            if record_type == 'STUDENT':
+                rec = StudentAttendanceRecord.objects.get(id=record_id)
+                rec.status = new_status
+                rec.save()
+                if new_status == 'ABSENT':
+                    messages.warning(request, f"SMS alert staged for parent of {rec.student.first_name} ({rec.student.parent_phone})")
+            elif record_type == 'TEACHER':
+                rec = TeacherAttendanceRecord.objects.get(id=record_id)
+                rec.status = new_status
+                rec.save()
+            return redirect('attendance_deck')
+        except (StudentAttendanceRecord.DoesNotExist, TeacherAttendanceRecord.DoesNotExist):
+            messages.error(request, "Record not found.")
     
     students = Student.objects.filter(is_active=True)
     staff_members = StaffProfile.objects.all()
@@ -1615,7 +1618,7 @@ def global_attendance_control_deck(request):
     context = {
         'today': today,
         'student_attendance': StudentAttendanceRecord.objects.filter(date=today).select_related('student__class_stream'),
-        'teacher_attendance': TeacherAttendanceRecord.objects.filter(date=today).select_related('staff__user'),
+        'teacher_attendance': TeacherAttendanceRecord.objects.filter(date=today).select_related('staff'),
         'total_present_students': StudentAttendanceRecord.objects.filter(date=today, status='PRESENT').count(),
         'total_absent_students': StudentAttendanceRecord.objects.filter(date=today, status='ABSENT').count(),
         'total_present_teachers': TeacherAttendanceRecord.objects.filter(date=today, status='PRESENT').count(),

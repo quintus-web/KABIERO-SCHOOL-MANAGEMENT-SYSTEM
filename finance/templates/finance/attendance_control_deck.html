@@ -165,7 +165,7 @@
                             {% for record in teacher_attendance %}
                             <tr class="border-bottom">
                                 <td>
-                                    <div class="fw-bold text-dark">{{ record.staff.user.first_name }} {{ record.staff.user.last_name }}</div>
+                                    <div class="fw-bold text-dark">{% if record.staff.user %}{{ record.staff.user.first_name }} {{ record.staff.user.last_name }}{% else %}{{ record.staff.first_name|default:"Unnamed" }} {{ record.staff.last_name|default:"" }}{% endif %}</div>
                                     <code class="small text-muted font-monospace" style="font-size:0.75rem;">{{ record.staff.employee_number }}</code>
                                 </td>
                                 <td>
