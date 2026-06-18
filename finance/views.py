@@ -1358,6 +1358,32 @@ def post_homework_assignment(request):
     })
 
 
+def staff_login_view(request):
+    """Maps to path('gateway/login/', name='staff_login')"""
+    role = request.GET.get("role", "Admin")
+
+    if request.method == "POST":
+        user = authenticate(
+            request,
+            username=request.POST.get("username"),
+            password=request.POST.get("password")
+        )
+        if user:
+            login(request, user)
+            request.session["role"] = role
+            return redirect("public_home")
+        
+        messages.error(request, "Operational authorization denied: Invalid terminal signatures.")
+
+    return render(request, "finance/staff_login.html", {"target_role": role})
+
+
+def staff_logout_view(request):
+    """Maps to path('gateway/logout/', name='staff_logout')"""
+    logout(request)
+    return redirect("public_home")
+
+
 @login_required
 def developer_debug_console_hub(request):
     if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
