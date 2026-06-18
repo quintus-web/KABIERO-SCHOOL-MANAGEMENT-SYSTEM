@@ -1,0 +1,240 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Reports Hub - Crescent Heights Academy{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">Reports & Export Hub</h3>
+        <p class="text-muted small text-uppercase fw-semibold mb-0">Generate, filter, and export finance, attendance, and grading reports</p>
+    </div>
+    <a href="{% url 'generate_bulk_invoices' %}" class="btn btn-primary btn-sm fw-semibold px-4 rounded-3 shadow-sm">
+        <i class="bi bi-plus-circle me-1"></i> Generate Bulk Invoices
+    </a>
+</div>
+
+<div class="card card-custom p-4 mb-4">
+    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-funnel me-2 text-primary"></i>Report Parameters</h6>
+    <form method="GET" action="{% url 'finance_reports' %}" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small fw-semibold text-muted">Report Type</label>
+            <select name="type" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="collection" {% if report_type == 'collection' %}selected{% endif %}>Fee Collection Summary</option>
+                <option value="invoices" {% if report_type == 'invoices' %}selected{% endif %}>Invoice Register</option>
+                <option value="receipts" {% if report_type == 'receipts' %}selected{% endif %}>Receipt Register</option>
+                <option value="defaulters" {% if report_type == 'defaulters' %}selected{% endif %}>Fee Defaulters</option>
+                <option value="attendance" {% if report_type == 'attendance' %}selected{% endif %}>Attendance Register</option>
+                <option value="grading" {% if report_type == 'grading' %}selected{% endif %}>Grading Register</option>
+            </select>
+        </div>
+        {% if report_type in 'collection,invoices,receipts' %}
+        <div class="col-md-2">
+            <label class="form-label small fw-semibold text-muted">Term</label>
+            <select name="term" class="form-select form-select-sm" onchange="this.form.submit()">
+                {% for t in terms %}
+                <option value="{{ t }}" {% if selected_term == t %}selected{% endif %}>{{ t|title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-semibold text-muted">Level / Stream</label>
+            <select name="level" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Levels</option>
+                {% for lvl in levels %}
+                <option value="{{ lvl }}" {% if selected_level == lvl %}selected{% endif %}>{{ lvl }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-semibold text-muted">Year</label>
+            <input type="number" name="year" value="{{ selected_year }}" class="form-control form-control-sm" onchange="this.form.submit()">
+        </div>
+        {% elif report_type == 'attendance' %}
+        <div class="col-md-2">
+            <label class="form-label small fw-semibold text-muted">Stream</label>
+            <select name="stream_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Streams</option>
+                {% for lvl in levels %}
+                <option value="{{ lvl }}" {% if selected_level == lvl %}selected{% endif %}>{{ lvl }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-semibold text-muted">Date From</label>
+            <input type="date" name="date_from" value="{{ request.GET.date_from|default:'' }}" class="form-control form-control-sm" onchange="this.form.submit()">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-semibold text-muted">Date To</label>
+            <input type="date" name="date_to" value="{{ request.GET.date_to|default:'' }}" class="form-control form-control-sm" onchange="this.form.submit()">
+        </div>
+        {% elif report_type == 'grading' %}
+        <div class="col-md-2">
+            <label class="form-label small fw-semibold text-muted">Term</label>
+            <select name="term" class="form-select form-select-sm" onchange="this.form.submit()">
+                {% for t in terms %}
+                <option value="{{ t }}" {% if selected_term == t %}selected{% endif %}>{{ t|title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-semibold text-muted">Stream</label>
+            <select name="stream" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Streams</option>
+                {% for lvl in levels %}
+                <option value="{{ lvl }}" {% if selected_level == lvl %}selected{% endif %}>{{ lvl }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-semibold text-muted">Subject</label>
+            <select name="subject" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">All Subjects</option>
+                {% for subj in subjects %}
+                <option value="{{ subj.id }}" {% if request.GET.subject|add:'' == subj.id|stringformat:"s" %}selected{% endif %}>{{ subj.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-semibold text-muted">Year</label>
+            <input type="number" name="year" value="{{ selected_year }}" class="form-control form-control-sm" onchange="this.form.submit()">
+        </div>
+        {% endif %}
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-dark btn-sm fw-semibold px-4 w-100">Load Report</button>
+        </div>
+    </form>
+</div>
+
+{% if report_data %}
+<div class="card card-custom mb-3">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h6 class="fw-bold text-dark mb-0"><i class="bi bi-table me-2 text-primary"></i>{{ report_title }}</h6>
+        <a href="{% url 'export_report_csv' report_type %}?{% if selected_term %}term={{ selected_term }}&{% endif %}{% if selected_level %}level={{ selected_level }}&{% endif %}{% if request.GET.stream_id %}stream_id={{ request.GET.stream_id }}&{% endif %}{% if request.GET.date_from %}date_from={{ request.GET.date_from }}&{% endif %}{% if request.GET.date_to %}date_to={{ request.GET.date_to }}&{% endif %}{% if request.GET.stream %}stream={{ request.GET.stream }}&{% endif %}{% if request.GET.subject %}subject={{ request.GET.subject }}&{% endif %}year={{ selected_year }}" class="btn btn-outline-success btn-sm fw-semibold px-3">
+            <i class="bi bi-download me-1"></i> Download CSV
+        </a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    {% for h in headers %}
+                    <th>{{ h }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in report_data %}
+                <tr class="border-bottom">
+                    {% if report_type == 'collection' %}
+                    <td><code class="fw-bold font-monospace small text-secondary">{{ row.student.admission_number }}</code></td>
+                    <td class="fw-semibold text-dark">{{ row.student.first_name }} {{ row.student.last_name }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ row.stream }}</span></td>
+                    <td class="text-end font-monospace small">{{ row.invoiced|floatformat:0 }}</td>
+                    <td class="text-end font-monospace small text-success">{{ row.collected|floatformat:0 }}</td>
+                    <td class="text-end font-monospace small text-danger">{{ row.balance|floatformat:0 }}</td>
+                    <td class="text-center">
+                        <span class="badge {% if row.rate >= 80 %}bg-success{% elif row.rate >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %} rounded-pill px-2">
+                            {{ row.rate }}%
+                        </span>
+                    </td>
+                    {% elif report_type == 'invoices' %}
+                    <td><code class="fw-bold font-monospace small">INV-{{ row.invoice_id }}</code></td>
+                    <td class="small text-secondary font-monospace">{{ row.date }}</td>
+                    <td><code class="fw-bold font-monospace small text-secondary">{{ row.adm }}</code></td>
+                    <td class="fw-semibold text-dark">{{ row.student }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ row.stream }}</span></td>
+                    <td class="small">{{ row.title }}</td>
+                    <td class="text-end font-monospace fw-bold text-dark">{{ row.amount|floatformat:0 }}</td>
+                    <td class="small text-muted">{{ row.description }}</td>
+                    {% elif report_type == 'receipts' %}
+                    <td><code class="fw-bold font-monospace small text-success">{{ row.ref }}</code></td>
+                    <td class="small text-secondary font-monospace">{{ row.date }}</td>
+                    <td><code class="fw-bold font-monospace small text-secondary">{{ row.adm }}</code></td>
+                    <td class="fw-semibold text-dark">{{ row.student }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ row.stream }}</span></td>
+                    <td class="small">{{ row.channel }}</td>
+                    <td class="text-end font-monospace fw-bold text-success">{{ row.amount|floatformat:0 }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ row.status }}</span></td>
+                    {% elif report_type == 'defaulters' %}
+                    <td><code class="fw-bold font-monospace small text-secondary">{{ row.adm }}</code></td>
+                    <td class="fw-semibold text-dark">{{ row.student }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ row.stream }}</span></td>
+                    <td class="text-end font-monospace fw-bold text-danger">{{ row.balance|floatformat:0 }}</td>
+                    <td class="small text-muted">{{ row.phone }}</td>
+                    {% elif report_type == 'attendance' %}
+                    <td class="small text-secondary font-monospace">{{ row.log.date }}</td>
+                    <td><code class="fw-bold font-monospace small text-secondary">{{ row.log.student.admission_number }}</code></td>
+                    <td class="fw-semibold text-dark">{{ row.log.student.first_name }} {{ row.log.student.last_name }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ row.log.student.class_stream.name if row.log.student.class_stream else 'Unassigned' }}</span></td>
+                    <td class="text-center">
+                        {% if row.log.is_present %}
+                            <span class="badge bg-success rounded-pill px-3">Present</span>
+                        {% else %}
+                            <span class="badge bg-danger rounded-pill px-3">Absent</span>
+                        {% endif %}
+                    </td>
+                    <td class="small text-muted">{{ row.log.remarks|default:"—" }}</td>
+                    {% elif report_type == 'grading' %}
+                    <td><code class="fw-bold font-monospace small text-secondary">{{ row.student.admission_number }}</code></td>
+                    <td class="fw-semibold text-dark">{{ row.student.first_name }} {{ row.student.last_name }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ row.student.class_stream.name if row.student.class_stream else 'Unassigned' }}</span></td>
+                    <td>{{ row.subject.name }}</td>
+                    <td>{{ row.term|title }}</td>
+                    <td>{{ row.year }}</td>
+                    <td class="text-center font-monospace">{{ row.cat_1 }}</td>
+                    <td class="text-center font-monospace">{{ row.cat_2 }}</td>
+                    <td class="text-center font-monospace">{{ row.final_exam }}</td>
+                    <td class="text-end fw-bold text-primary font-monospace">{{ row.total_marks }}</td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{{ headers|length }}" class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox text-muted mb-2 d-block" style="font-size: 2.5rem;"></i>
+                        <p class="mb-0 small fw-medium">No records match the current filter criteria.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if report_type == 'collection' and report_data %}
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card bg-white border p-3">
+            <span class="text-muted small text-uppercase fw-bold">Total Students</span>
+            <h2 class="fw-bold text-dark mb-0 font-monospace">{{ report_data|length }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary bg-opacity-10 border-primary border p-3">
+            <span class="text-primary small text-uppercase fw-bold">Total Invoiced</span>
+            <h2 class="fw-bold text-primary mb-0 font-monospace">KES {{ report_data|sum:'invoiced'|floatformat:0 }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success bg-opacity-10 border-success border p-3">
+            <span class="text-success small text-uppercase fw-bold">Total Collected</span>
+            <h2 class="fw-bold text-success mb-0 font-monospace">KES {{ report_data|sum:'collected'|floatformat:0 }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger bg-opacity-10 border-danger border p-3">
+            <span class="text-danger small text-uppercase fw-bold">Total Outstanding</span>
+            <h2 class="fw-bold text-danger mb-0 font-monospace">KES {{ report_data|sum:'balance'|floatformat:0 }}</h2>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% else %}
+<div class="card card-custom">
+    <div class="card-body text-center py-5 text-muted">
+        <i class="bi bi-file-earmark-spreadsheet text-muted mb-3 d-block" style="font-size: 3rem;"></i>
+        <h5 class="fw-bold text-dark mb-1">No Report Loaded</h5>
+        <p class="small mx-auto mb-0" style="max-width: 350px;">Select a report type above and click Load Report to view and export data.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

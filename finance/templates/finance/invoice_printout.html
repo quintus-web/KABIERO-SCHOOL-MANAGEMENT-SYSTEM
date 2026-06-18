@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice INV-{{ invoice.id }} - {{ invoice.student.admission_number }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: white; color: #1e293b; padding: 2rem 0; }
+        .invoice-container { max-width: 800px; margin: 0 auto; border: 2px solid #0f172a; padding: 2.5rem; background: #fff; }
+        .invoice-header { border-bottom: 4px double #1e293b; text-align: center; padding-bottom: 1.5rem; margin-bottom: 2rem; }
+        @media print { .no-print { display: none !important; } body { padding: 0; } .invoice-container { border: none; padding: 0; } }
+    </style>
+</head>
+<body>
+
+<div class="container text-center mb-4 no-print">
+    <button onclick="window.print()" class="btn btn-dark fw-semibold px-4"><i class="bi bi-printer me-1"></i> Trigger Device Print Loop</button>
+</div>
+
+<div class="invoice-container shadow-sm">
+    <div class="invoice-header">
+        <h2 class="fw-bold uppercase tracking-wide mb-1" style="color: #1B4332;">KABIERO ACADEMY HIGH SCHOOL</h2>
+        <p class="text-muted small uppercase fw-semibold mb-0">P.O. Box 4500 - 00100, Nairobi, Kenya · Email: accounts@kabiero.sc.ke</p>
+        <h5 class="fw-bold text-dark mt-3 mb-0 text-uppercase tracking-wider">Official Fee Invoice</h5>
+    </div>
+
+    <div class="row g-3 mb-4 bg-light p-3 rounded-3 border">
+        <div class="col-md-6">
+            <span class="text-muted small d-block">Invoice Reference:</span>
+            <strong class="text-dark fs-5">INV-{{ invoice.id }}</strong>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <span class="text-muted small d-block">Date Issued:</span>
+            <strong class="text-dark fs-5">{{ invoice.date_issued|date:"Y-m-d" }}</strong>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4 bg-light p-3 rounded-3 border">
+        <div class="col-md-6">
+            <span class="text-muted small d-block">Student Profile Identity:</span>
+            <strong class="text-dark fs-5">{{ invoice.student.first_name }} {{ invoice.student.last_name }}</strong>
+        </div>
+        <div class="col-md-3">
+            <span class="text-muted small d-block">Admission Token:</span>
+            <code class="fw-bold fs-6 text-primary font-monospace">{{ invoice.student.admission_number }}</code>
+        </div>
+        <div class="col-md-3">
+            <span class="text-muted small d-block">Stream Assignment:</span>
+            <strong class="text-dark">{{ invoice.student.class_stream.name|default:"Form 1 Alpha" }}</strong>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <h6 class="fw-bold text-dark mb-3">Invoice Particulars</h6>
+        <table class="table table-bordered align-middle mb-4" style="font-size:0.95rem;">
+            <thead class="table-dark">
+                <tr>
+                    <th>Description</th>
+                    <th class="text-end" style="width: 180px;">Amount (KES)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="fw-bold text-dark">{{ invoice.title }}</td>
+                    <td class="text-end fw-bold text-primary font-monospace">{{ invoice.amount|floatformat:2 }}</td>
+                </tr>
+                {% if invoice.description %}
+                <tr>
+                    <td class="text-muted small" colspan="2">{{ invoice.description }}</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+        <div class="row g-3 border-top pt-3 mb-4">
+            <div class="col-md-4 text-center border-end">
+                <span class="text-muted small d-block">Term:</span>
+                <h4 class="fw-bold text-dark font-monospace mt-1 mb-0">{{ invoice.term|title }}</h4>
+            </div>
+            <div class="col-md-4 text-center border-end">
+                <span class="text-muted small d-block">Academic Year:</span>
+                <h4 class="fw-bold text-dark font-monospace mt-1 mb-0">{{ invoice.year }}</h4>
+            </div>
+            <div class="col-md-4 text-center">
+                <span class="text-muted small d-block">Amount Payable:</span>
+                <h3 class="fw-bold text-primary font-monospace mt-1 mb-0">KES {{ invoice.amount|floatformat:2 }}</h3>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="p-3 rounded-3 bg-light border">
+                    <strong class="d-block small text-secondary">Payment History</strong>
+                    {% if receipts %}
+                        {% for r in receipts %}
+                        <div class="d-flex justify-content-between mt-2 small">
+                            <span class="text-muted">{{ r.date_paid|date:"Y-m-d" }} · {{ r.get_payment_channel_display }}</span>
+                            <span class="fw-bold text-success font-monospace">KES {{ r.amount|floatformat:2 }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted small mt-2 mb-0">No payments received yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="p-3 rounded-3 border {% if balance > 0 %}bg-danger bg-opacity-10 border-danger{% else %}bg-success bg-opacity-10 border-success{% endif %}">
+                    <span class="text-muted small d-block">Amount Paid:</span>
+                    <h3 class="fw-bold text-success font-monospace mt-1 mb-0">KES {{ total_paid|floatformat:2 }}</h3>
+                    <span class="text-muted small d-block mt-2">Outstanding Balance:</span>
+                    <h3 class="fw-bold {% if balance > 0 %}text-danger{% else %}text-success{% endif %} font-monospace mt-1 mb-0">KES {{ balance|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-3 bg-light rounded-3 border mb-5">
+        <strong class="d-block small text-secondary">Bursar Official Remarks:</strong>
+        <p class="text-dark fst-italic mt-1 mb-0" style="font-size:0.92rem;">"This invoice is computer-generated and valid without a signature. Payments should be made through the school bursar office via M-Pesa Paybill, bank transfer, or cash."</p>
+    </div>
+
+    <div class="row pt-4 text-center small text-muted">
+        <div class="col-6">
+            <div class="border-top mx-auto pt-2" style="max-width:200px;">Bursar Signature</div>
+        </div>
+        <div class="col-6">
+            <div class="border-top mx-auto pt-2" style="max-width:200px;">Official School Stamp</div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

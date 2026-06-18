@@ -20,9 +20,13 @@ urlpatterns = [
     
     # ── BURSAR ACCOUNTING ENGINE & LEDGERS ──
     path('treasury/ledger/', views.bursar_dashboard, name='bursar_dashboard'),
+    path('treasury/fee-structure/', views.fee_structure, name='fee_structure'),
     path('treasury/statement/<int:student_id>/', views.student_account_statement, name='student_statement'),
     path('treasury/collect-fees/<int:student_id>/', views.collect_fee_payment, name='collect_fee_payment'),
     path('treasury/defaulters-sms/', views.fee_defaulters_portal, name='fee_defaulters_portal'),
+    path('treasury/analytics/', views.financial_analytics, name='financial_analytics'),
+    path('treasury/invoices/', views.invoice_list, name='invoice_list'),
+    path('treasury/invoice/<int:invoice_id>/pdf/', views.generate_invoice_pdf, name='generate_invoice_pdf'),
     
     # ── FACULTY BROADCASTER ENGINE ──
     path('faculty/class-broadcast/', views.teacher_sms_broadcast, name='teacher_sms_broadcast'),
@@ -59,4 +63,10 @@ urlpatterns = [
     # Place these inside your urlpatterns list alongside other student routes
     path('registry/learners/<int:student_id>/edit/', views.edit_student_info, name='edit_student'),
     path('registry/learners/<int:student_id>/delete/', views.delete_student_record, name='delete_student'),
+    path('registry/grade-promotion/', views.grade_promotion_dashboard, name='grade_promotion'),
+    
+    # ── REPORT HUB & EXPORT ENGINE ──
+    path('reports/', views.finance_reports_hub, name='finance_reports'),
+    path('reports/export/<str:report_type>/csv/', views.export_report_csv, name='export_report_csv'),
+    path('reports/generate-invoices/', views.generate_bulk_invoices, name='generate_bulk_invoices'),
 ]

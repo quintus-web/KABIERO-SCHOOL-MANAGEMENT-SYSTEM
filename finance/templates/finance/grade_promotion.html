@@ -1,0 +1,124 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Grade Promotion - Crescent Heights Academy{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold text-dark mb-1" style="letter-spacing: -0.02em;">Grade Promotion Dashboard</h3>
+        <p class="text-muted small text-uppercase fw-semibold mb-0" style="letter-spacing: 0.05em; font-size: 0.72rem;">Advance active learners to the next grade level</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    {% for item in grade_summary %}
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: 14px;">
+            <span class="text-muted small text-uppercase fw-bold" style="font-size: 0.68rem; letter-spacing: 0.05em;">{{ item.grade }}</span>
+            <h3 class="fw-bold text-dark mt-1 mb-0" style="letter-spacing: -0.02em;">{{ item.count }}</h3>
+            <span class="text-muted small">active learners</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card border-0 shadow-sm bg-white mb-4" style="border-radius: 16px;">
+    <div class="card-body p-4">
+        <h5 class="fw-bold text-dark mb-3">Promote Learners</h5>
+        <form method="POST" class="row g-3 align-items-end">
+            {% csrf_token %}
+            <div class="col-md-4">
+                <label for="selected_grade" class="form-label fw-semibold small text-muted">Select Grade to Promote (optional)</label>
+                <select name="selected_grade" id="selected_grade" class="form-select" style="border-radius: 10px;">
+                    <option value="ALL">All Active Grades</option>
+                    {% for item in grade_summary %}
+                    <option value="{{ item.grade }}">{{ item.grade }} ({{ item.count }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary fw-bold w-100" style="border-radius: 10px; height: 42px;">
+                    <i class="bi bi-arrow-up-circle me-1"></i> Promote Now
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if promoted_count or graduated_count or skipped_count %}
+<div class="card border-0 shadow-sm bg-white mb-4" style="border-radius: 16px;">
+    <div class="card-body p-4">
+        <h5 class="fw-bold text-dark mb-3">Promotion Summary</h5>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="p-3 rounded-3" style="background-color: #f0fdf4;">
+                    <span class="small text-muted text-uppercase fw-bold">Promoted</span>
+                    <h4 class="fw-bold text-success mb-0">{{ promoted_count }}</h4>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 rounded-3" style="background-color: #eff6ff;">
+                    <span class="small text-muted text-uppercase fw-bold">Graduated</span>
+                    <h4 class="fw-bold text-primary mb-0">{{ graduated_count }}</h4>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 rounded-3" style="background-color: #fff7ed;">
+                    <span class="small text-muted text-uppercase fw-bold">Skipped</span>
+                    <h4 class="fw-bold text-warning mb-0">{{ skipped_count }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if promotion_details %}
+<div class="card border-0 shadow-sm bg-white" style="border-radius: 16px;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-secondary small uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.02em;">
+                    <tr>
+                        <th class="ps-4 py-3">Admission No.</th>
+                        <th>Student Name</th>
+                        <th>Previous Grade</th>
+                        <th>Action</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody style="font-size: 0.88rem;">
+                    {% for item in promotion_details %}
+                    <tr class="border-bottom">
+                        <td class="ps-4">
+                            <code class="fw-bold text-primary font-monospace px-2 py-1 rounded bg-primary-subtle" style="font-size: 0.8rem;">{{ item.student.admission_number }}</code>
+                        </td>
+                        <td>
+                            <span class="fw-bold text-dark">{{ item.student.first_name }} {{ item.student.last_name }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border px-2.5 py-1 rounded-3 fw-semibold" style="font-size: 0.78rem;">
+                                {{ item.student.class_stream.name|default:"Unassigned" }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if item.action == 'Promoted' %}
+                                <span class="badge bg-success px-2.5 py-1 rounded-pill fw-semibold" style="font-size: 0.75rem;">Promoted</span>
+                            {% elif item.action == 'Graduated' %}
+                                <span class="badge bg-primary px-2.5 py-1 rounded-pill fw-semibold" style="font-size: 0.75rem;">Graduated</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark px-2.5 py-1 rounded-pill fw-semibold" style="font-size: 0.75rem;">Skipped</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="text-muted small">{{ item.reason }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

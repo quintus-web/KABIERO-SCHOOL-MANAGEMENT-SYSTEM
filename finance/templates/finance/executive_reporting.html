@@ -1,140 +1,540 @@
-<!-- finance/templates/finance/executive_reporting.html -->
 {% extends 'finance/base.html' %}
 
 {% block title %}Executive Analytics & KPI Control Room - Crescent Heights Academy{% endblock %}
 
 {% block content %}
 <div class="container-fluid p-0">
-    
-    <!-- Workspace Title Banner -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
-            <h3 class="fw-bold text-dark mb-1"><i class="bi bi-graph-up-arrow text-success me-2"></i>Executive Analytics & Reporting</h3>
-            <p class="text-muted small text-uppercase fw-semibold mb-0">Cross-Module Core Performance Indicators & Financial Health Matrix</p>
+            <h3 class="fw-bold text-dark mb-1"><i class="bi bi-graph-up-arrow text-success me-2"></i>Executive Analytics & KPI Control Room</h3>
+            <p class="text-muted small text-uppercase fw-semibold mb-0">Finance, academic, attendance, operations, and asset health intelligence</p>
         </div>
-        <button onclick="window.print()" class="btn btn-dark btn-sm rounded-3 px-3 d-inline-flex align-items-center gap-1 fw-semibold no-print">
-            <i class="bi bi-printer"></i> Export Summary Report
-        </button>
+        <div class="d-flex gap-2 no-print">
+            <button onclick="window.print()" class="btn btn-dark btn-sm rounded-3 px-3 d-inline-flex align-items-center gap-1 fw-semibold">
+                <i class="bi bi-printer"></i> Export Summary
+            </button>
+        </div>
     </div>
 
-    <!-- Core School KPI Grid Summary Row -->
     <div class="row g-3 mb-4">
-        <div class="col-6 col-xl-3">
-            <div class="card card-custom p-3 mb-0 border-0 shadow-sm bg-white">
-                <small class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size:0.65rem; letter-spacing:0.05em;">Total Student Roster</small>
-                <div class="d-flex justify-content-between align-items-end">
-                    <h3 class="fw-bold text-dark font-monospace mb-0">{{ total_students }}</h3>
-                    <span class="badge bg-success bg-opacity-10 text-success small fw-medium">Active Enrolled</span>
-                </div>
+        <div class="col-6 col-xl-2">
+            <div class="card card-custom p-3 border-0 shadow-sm bg-white h-100">
+                <small class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size:0.65rem; letter-spacing:0.05em;">Active Learners</small>
+                <h3 class="fw-bold text-dark font-monospace mb-0">{{ total_students }}</h3>
+                <span class="badge bg-success bg-opacity-10 text-success small mt-2">Enrolled</span>
             </div>
         </div>
-        <div class="col-6 col-xl-3">
-            <div class="card card-custom p-3 mb-0 border-0 shadow-sm bg-white">
-                <small class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size:0.65rem; letter-spacing:0.05em;">Fee Collection Rate</small>
-                <div class="d-flex justify-content-between align-items-end">
-                    <h3 class="fw-bold text-primary font-monospace mb-0">{{ collection_efficiency }}%</h3>
-                    <span class="badge bg-primary bg-opacity-10 text-primary small fw-medium">Efficiency Target</span>
-                </div>
+        <div class="col-6 col-xl-2">
+            <div class="card card-custom p-3 border-0 shadow-sm bg-white h-100">
+                <small class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size:0.65rem; letter-spacing:0.05em;">Streams</small>
+                <h3 class="fw-bold text-primary font-monospace mb-0">{{ total_streams }}</h3>
+                <span class="badge bg-primary bg-opacity-10 text-primary small mt-2">Valid grades</span>
             </div>
         </div>
-        <div class="col-6 col-xl-3">
-            <div class="card card-custom p-3 mb-0 border-0 shadow-sm bg-white">
-                <small class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size:0.65rem; letter-spacing:0.05em;">Outstanding Arrears</small>
-                <div class="d-flex justify-content-between align-items-end">
-                    <h3 class="fw-bold text-danger font-monospace mb-0">KES {{ total_arrears|floatformat:0 }}</h3>
-                    <span class="badge bg-danger bg-opacity-10 text-danger small fw-medium">Uncollected</span>
-                </div>
+        <div class="col-6 col-xl-2">
+            <div class="card card-custom p-3 border-0 shadow-sm bg-white h-100">
+                <small class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size:0.65rem; letter-spacing:0.05em;">Subjects</small>
+                <h3 class="fw-bold text-info font-monospace mb-0">{{ total_subjects }}</h3>
+                <span class="badge bg-info bg-opacity-10 text-info small mt-2">Curriculum</span>
             </div>
         </div>
-        <div class="col-6 col-xl-3">
-            <div class="card card-custom p-3 mb-0 border-0 shadow-sm bg-white">
-                <small class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size:0.65rem; letter-spacing:0.05em;">Asset Health Index</small>
-                <div class="d-flex justify-content-between align-items-end">
-                    <h3 class="fw-bold text-success font-monospace mb-0">{{ operational_rate }}%</h3>
-                    <span class="badge bg-warning text-dark small fw-medium">{{ assets_at_risk }} In Workshop</span>
-                </div>
+        <div class="col-6 col-xl-2">
+            <div class="card card-custom p-3 border-0 shadow-sm bg-white h-100">
+                <small class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size:0.65rem; letter-spacing:0.05em;">Teachers</small>
+                <h3 class="fw-bold text-success font-monospace mb-0">{{ total_teachers }}</h3>
+                <span class="badge bg-success bg-opacity-10 text-success small mt-2">Active staff</span>
+            </div>
+        </div>
+        <div class="col-6 col-xl-2">
+            <div class="card card-custom p-3 border-0 shadow-sm bg-white h-100">
+                <small class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size:0.65rem; letter-spacing:0.05em;">Collection Rate</small>
+                <h3 class="fw-bold text-primary font-monospace mb-0">{{ collection_efficiency|floatformat:1 }}%</h3>
+                <span class="badge bg-primary bg-opacity-10 text-primary small mt-2">Fee recovery</span>
+            </div>
+        </div>
+        <div class="col-6 col-xl-2">
+            <div class="card card-custom p-3 border-0 shadow-sm bg-white h-100">
+                <small class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size:0.65rem; letter-spacing:0.05em;">Asset Health</small>
+                <h3 class="fw-bold text-success font-monospace mb-0">{{ operational_rate|floatformat:1 }}%</h3>
+                <span class="badge bg-warning bg-opacity-10 text-warning text-dark small mt-2">{{ assets_at_risk }} repairs</span>
             </div>
         </div>
     </div>
 
-    <!-- Interactive Analytics Interactive Canvas Element Tool -->
     <div class="row g-4 mb-4">
-        <div class="col-12">
-            <div class="card card-custom border-0 bg-white shadow-sm p-4">
-                <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="bi bi-pie-chart me-2 text-success"></i>Interactive Treasury Asset Allocation Calculator</h5>
-                <p class="text-secondary small mb-4">Adjust the range slider parameters below to dynamically recalculate projected operational savings vs reserve provisions directly during client presentations.</p>
-                
-                <!-- Parameter Controls Container -->
-                <div class="bg-light p-3 rounded-3 mb-4">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold text-secondary mb-1">Target Revenue Allocation to Infrastructure Reserve</label>
-                            <div class="d-flex align-items-center gap-3">
-                                <input type="range" id="reserveSlider" class="form-range" min="5" max="40" value="15" oninput="runSimulation()">
-                                <span class="badge bg-dark font-monospace p-2" id="reserveLabel" style="min-width:50px;">15%</span>
+        <div class="col-lg-8">
+            <div class="card card-custom border-0 shadow-sm bg-white h-100">
+                <div class="card-header bg-white border-bottom py-3">
+                    <div class="d-flex justify-content-between align-items-center gap-3">
+                        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-cash-stack me-2 text-success"></i>Financial Command Center</h5>
+                        <span class="badge bg-success bg-opacity-10 text-success small">Generated {{ generation_date|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-3 bg-primary bg-opacity-10 border border-primary border-opacity-25">
+                                <small class="text-primary fw-bold d-block text-uppercase" style="font-size:0.7rem;">Total Invoiced</small>
+                                <h4 class="fw-bold text-dark font-monospace mb-0">KES {{ total_invoiced|floatformat:0 }}</h4>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold text-secondary mb-1">Target Allocation to Academic Stores & Equipment</label>
-                            <div class="d-flex align-items-center gap-3">
-                                <input type="range" id="academicSlider" class="form-range" min="10" max="50" value="25" oninput="runSimulation()">
-                                <span class="badge bg-dark font-monospace p-2" id="academicLabel" style="min-width:50px;">25%</span>
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-3 bg-success bg-opacity-10 border border-success border-opacity-25">
+                                <small class="text-success fw-bold d-block text-uppercase" style="font-size:0.7rem;">Total Collected</small>
+                                <h4 class="fw-bold text-dark font-monospace mb-0">KES {{ total_collected|floatformat:0 }}</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-3 bg-danger bg-opacity-10 border border-danger border-opacity-25">
+                                <small class="text-danger fw-bold d-block text-uppercase" style="font-size:0.7rem;">Outstanding Arrears</small>
+                                <h4 class="fw-bold text-dark font-monospace mb-0">KES {{ total_arrears|floatformat:0 }}</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-dark mb-3">Term Fee Performance</h6>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 small">
+                            <thead class="table-light">
+                                <tr><th>Term</th><th class="text-end">Invoiced</th><th class="text-end">Collected</th><th class="text-end">Outstanding</th><th class="text-end">Rate</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for item in term_fee_summary %}
+                                <tr>
+                                    <td class="fw-semibold">{{ item.label }}</td>
+                                    <td class="text-end font-monospace">KES {{ item.invoiced|floatformat:0 }}</td>
+                                    <td class="text-end font-monospace text-success">KES {{ item.collected|floatformat:0 }}</td>
+                                    <td class="text-end font-monospace text-danger">KES {{ item.outstanding|floatformat:0 }}</td>
+                                    <td class="text-end"><span class="badge bg-primary bg-opacity-10 text-primary">{{ item.rate|floatformat:1 }}%</span></td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="text-center text-muted py-4">No fee structure data available yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card card-custom border-0 shadow-sm bg-white h-100">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-people me-2 text-primary"></i>Today's Attendance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between p-3 rounded-3 bg-light mb-3">
+                        <div>
+                            <small class="text-muted fw-bold d-block text-uppercase" style="font-size:0.68rem;">Attendance Rate</small>
+                            <h3 class="fw-bold text-primary font-monospace mb-0">{{ attendance_rate|floatformat:1 }}%</h3>
+                        </div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2">{{ attendance_total }} marked</span>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <div class="p-3 rounded-3 bg-success bg-opacity-10 text-center">
+                                <h4 class="fw-bold text-success mb-0">{{ attendance_present }}</h4>
+                                <small class="text-muted">Present</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 rounded-3 bg-danger bg-opacity-10 text-center">
+                                <h4 class="fw-bold text-danger mb-0">{{ attendance_absent }}</h4>
+                                <small class="text-muted">Absent</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 rounded-3 bg-warning bg-opacity-10 text-center">
+                                <h4 class="fw-bold text-warning text-dark mb-0">{{ attendance_late }}</h4>
+                                <small class="text-muted">Late</small>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Simulation Visual Metrics Output Canvas Display Grid -->
-                <div class="row text-center g-3">
-                    <div class="col-md-4">
-                        <div class="p-3 border rounded-3 bg-white">
-                            <small class="text-muted uppercase fw-semibold d-block" style="font-size:0.75rem;">Total Pool Funds Collected</small>
-                            <h4 class="fw-bold text-dark font-monospace mt-1 mb-0">KES {{ total_collected|floatformat:2 }}</h4>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="p-3 border border-primary border-opacity-20 rounded-3 bg-primary bg-opacity-5">
-                            <small class="text-primary uppercase fw-bold d-block" style="font-size:0.75rem;">Projected Infrastructure Allocation</small>
-                            <h4 class="fw-bold text-primary font-monospace mt-1 mb-0" id="infraOutput">KES 0.00</h4>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="p-3 border border-success border-opacity-20 rounded-3 bg-success bg-opacity-5">
-                            <small class="text-success uppercase fw-bold d-block" style="font-size:0.75rem;">Projected Academic Resources Pool</small>
-                            <h4 class="fw-bold text-success font-monospace mt-1 mb-0" id="acadOutput">KES 0.00</h4>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
     </div>
 
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card card-custom border-0 shadow-sm bg-white h-100">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-bar-chart-line me-2 text-success"></i>Stream Financial Breakdown</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr><th>Stream</th><th class="text-end">Students</th><th class="text-end">Collected</th><th class="text-end">Balance</th><th class="text-end">Rate</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for item in stream_breakdown %}
+                            <tr>
+                                <td class="fw-semibold">{{ item.stream.name }}</td>
+                                <td class="text-end">{{ item.students }}</td>
+                                <td class="text-end font-monospace text-success">KES {{ item.collected|floatformat:0 }}</td>
+                                <td class="text-end font-monospace text-danger">KES {{ item.balance|floatformat:0 }}</td>
+                                <td class="text-end"><span class="badge bg-success bg-opacity-10 text-success">{{ item.rate|floatformat:1 }}%</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted py-4">No valid stream data available yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card card-custom border-0 shadow-sm bg-white h-100">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-journal-check me-2 text-primary"></i>Academic Operations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="p-3 rounded-3 bg-primary bg-opacity-10 border border-primary border-opacity-20">
+                                <small class="text-primary fw-bold d-block text-uppercase" style="font-size:0.68rem;">Exam Records</small>
+                                <h3 class="fw-bold font-monospace mb-0">{{ exam_record_count }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded-3 bg-info bg-opacity-10 border border-info border-opacity-20">
+                                <small class="text-info fw-bold d-block text-uppercase" style="font-size:0.68rem;">Assignments</small>
+                                <h3 class="fw-bold font-monospace mb-0">{{ assignments_total }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded-3 bg-warning bg-opacity-10 border border-warning border-opacity-20">
+                                <small class="text-warning fw-bold d-block text-uppercase" style="font-size:0.68rem;">Overdue Tasks</small>
+                                <h3 class="fw-bold font-monospace mb-0">{{ overdue_assignments }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded-3 bg-success bg-opacity-10 border border-success border-opacity-20">
+                                <small class="text-success fw-bold d-block text-uppercase" style="font-size:0.68rem;">Approved Plans</small>
+                                <h3 class="fw-bold font-monospace mb-0">{{ approved_plans }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded-3 bg-secondary bg-opacity-10 border border-secondary border-opacity-20">
+                                <small class="text-secondary fw-bold d-block text-uppercase" style="font-size:0.68rem;">Pending Plans</small>
+                                <h3 class="fw-bold font-monospace mb-0">{{ pending_plans }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded-3 bg-dark bg-opacity-10 border border-dark border-opacity-10">
+                                <small class="text-dark fw-bold d-block text-uppercase" style="font-size:0.68rem;">Timetable Slots</small>
+                                <h3 class="fw-bold font-monospace mb-0">{{ timetable_slots }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card card-custom border-0 shadow-sm bg-white h-100">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-trophy me-2 text-warning"></i>Subject Performance Snapshot</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr><th>Subject</th><th class="text-end">Records</th><th class="text-end">Mean Score</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for item in subject_performance %}
+                            <tr>
+                                <td><strong>{{ item.subject.name }}</strong><br><small class="text-muted font-monospace">{{ item.subject.code }}</small></td>
+                                <td class="text-end">{{ item.records }}</td>
+                                <td class="text-end fw-bold {% if item.average >= 70 %}text-success{% elif item.average >= 50 %}text-primary{% else %}text-danger{% endif %}">{{ item.average|floatformat:1 }}%</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center text-muted py-4">No exam records available yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card card-custom border-0 shadow-sm bg-white h-100">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-boxes me-2 text-success"></i>Asset Health</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="p-3 rounded-3 bg-success bg-opacity-10 border border-success border-opacity-20">
+                                <small class="text-success fw-bold d-block text-uppercase" style="font-size:0.68rem;">Available Units</small>
+                                <h3 class="fw-bold font-monospace mb-0">{{ available_assets }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded-3 bg-warning bg-opacity-10 border border-warning border-opacity-20">
+                                <small class="text-warning fw-bold d-block text-uppercase" style="font-size:0.68rem;">Under Repair</small>
+                                <h3 class="fw-bold font-monospace mb-0">{{ assets_at_risk }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="p-3 rounded-3 bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold text-dark">Operational Capacity</span>
+                                    <span class="fw-bold text-success">{{ operational_rate|floatformat:1 }}%</span>
+                                </div>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ operational_rate }}%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="p-3 rounded-3 bg-danger bg-opacity-10 border border-danger border-opacity-20">
+                                <small class="text-danger fw-bold d-block text-uppercase" style="font-size:0.68rem;">Maintenance Cost Logged</small>
+                                <h3 class="fw-bold font-monospace mb-0">KES {{ maintenance_cost|floatformat:0 }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card card-custom border-0 shadow-sm bg-white h-100">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Recent Payments</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr><th>Student</th><th>Stream</th><th class="text-end">Amount</th><th class="text-end">Date</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in recent_payments %}
+                            <tr>
+                                <td>{{ payment.student.first_name }} {{ payment.student.last_name }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ payment.student.class_stream.name|default:"Unassigned" }}</span></td>
+                                <td class="text-end font-monospace fw-bold text-success">KES {{ payment.amount|floatformat:0 }}</td>
+                                <td class="text-end small text-muted">{{ payment.date_paid|date:"M d, Y" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-4">No completed payments recorded yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card card-custom border-0 shadow-sm bg-white h-100">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-exclamation-triangle me-2 text-danger"></i>Top Fee Defaulters</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr><th>Student</th><th>Stream</th><th class="text-end">Balance</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for d in defaulters %}
+                            <tr>
+                                <td><strong>{{ d.first_name }} {{ d.last_name }}</strong><br><small class="text-muted font-monospace">{{ d.admission_number }}</small></td>
+                                <td><span class="badge bg-light text-dark border">{{ d.class_stream.name|default:"Unassigned" }}</span></td>
+                                <td class="text-end font-monospace fw-bold text-danger">KES {{ d.current_balance|floatformat:0 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center text-muted py-4">No outstanding balances — all cleared.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card card-custom border-0 shadow-sm bg-white h-100">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-receipt me-2 text-success"></i>Recent Invoices</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr><th>Student</th><th>Stream</th><th class="text-end">Amount</th><th class="text-end">Issued</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in recent_invoices %}
+                            <tr>
+                                <td>{{ invoice.student.first_name }} {{ invoice.student.last_name }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ invoice.student.class_stream.name|default:"Unassigned" }}</span></td>
+                                <td class="text-end font-monospace fw-bold text-dark">KES {{ invoice.amount|floatformat:0 }}</td>
+                                <td class="text-end small text-muted">{{ invoice.date_issued|date:"M d, Y" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-4">No invoices generated yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card card-custom border-0 shadow-sm bg-white h-100">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-activity me-2 text-info"></i>Executive Activity Feed</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for log in activity_logs %}
+                    <div class="list-group-item border-bottom px-3 py-3">
+                        <div class="d-flex gap-3 align-items-start">
+                            <div class="rounded-3 bg-light d-flex align-items-center justify-content-center" style="width:38px;height:38px;">
+                                <i class="bi {{ log.icon }} text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center gap-2">
+                                    <strong class="text-dark">{{ log.title }}</strong>
+                                    <span class="badge {% if log.status == 'SUCCESS' %}bg-success bg-opacity-10 text-success{% elif log.status == 'WARNING' %}bg-warning bg-opacity-10 text-warning text-dark{% else %}bg-danger bg-opacity-10 text-danger{% endif %} small">{{ log.status }}</span>
+                                </div>
+                                <small class="text-muted d-block mt-1">{{ log.detail }}</small>
+                                <small class="text-secondary font-monospace">{{ log.time }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- Interactive Budget Allocation Real-Time Formula Engine Script -->
-<script>
-    function runSimulation() {
-        const totalCollected = parseFloat("{{ total_collected|default:0 }}");
-        
-        // Extract slider values
-        const reservePercent = parseInt(document.getElementById('reserveSlider').value);
-        const academicPercent = parseInt(document.getElementById('academicSlider').value);
-        
-        // Update range labels
-        document.getElementById('reserveLabel').innerText = reservePercent + '%';
-        document.getElementById('academicLabel').innerText = academicPercent + '%';
-        
-        // Apply mathematical formula mapping transformations
-        const infraAllocation = (reservePercent / 100) * totalCollected;
-        const acadAllocation = (academicPercent / 100) * totalCollected;
-        
-        // Format cash text layouts cleanly
-        document.getElementById('infraOutput').innerText = 'KES ' + infraAllocation.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        document.getElementById('acadOutput').innerText = 'KES ' + acadAllocation.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    }
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- EXECUTIVE REPORT EXPORT SECTIONS                              -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
 
-    // Fire default calculations on workspace layout mount
-    document.addEventListener("DOMContentLoaded", runSimulation);
-</script>
+<!-- ── FINANCE REPORT ── -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-12">
+        <div class="card card-custom border-0 shadow-sm bg-white">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-cash-stack me-2 text-success"></i>Finance Report — Fee Collection Summary</h5>
+                <a href="{% url 'export_report_csv' 'collection' %}?year={{ generation_date|date:'Y' }}" class="btn btn-outline-success btn-sm fw-semibold px-3">
+                    <i class="bi bi-download me-1"></i> Download Finance CSV
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr><th>Adm No</th><th>Student Name</th><th>Stream</th><th class="text-end">Invoiced (KES)</th><th class="text-end">Collected (KES)</th><th class="text-end">Balance (KES)</th><th class="text-center">Rate</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for row in finance_report_data %}
+                        <tr class="border-bottom">
+                            <td><code class="fw-bold font-monospace small text-secondary">{{ row.adm }}</code></td>
+                            <td class="fw-semibold text-dark">{{ row.name }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ row.stream }}</span></td>
+                            <td class="text-end font-monospace small">{{ row.invoiced|floatformat:0 }}</td>
+                            <td class="text-end font-monospace small text-success">{{ row.collected|floatformat:0 }}</td>
+                            <td class="text-end font-monospace small text-danger">{{ row.balance|floatformat:0 }}</td>
+                            <td class="text-center">
+                                <span class="badge {% if row.rate >= 80 %}bg-success{% elif row.rate >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %} rounded-pill px-2">
+                                    {{ row.rate }}%
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7" class="text-center text-muted py-4">No finance records available.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── ATTENDANCE REPORT ── -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-12">
+        <div class="card card-custom border-0 shadow-sm bg-white">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-calendar-check me-2 text-primary"></i>Attendance Report — Today's Roll-Call ({{ generation_date|date:"M d, Y" }})</h5>
+                <a href="{% url 'export_report_csv' 'attendance' %}?date_from={{ generation_date|date:'Y-m-d' }}&date_to={{ generation_date|date:'Y-m-d' }}" class="btn btn-outline-success btn-sm fw-semibold px-3">
+                    <i class="bi bi-download me-1"></i> Download Attendance CSV
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr><th>Adm No</th><th>Student Name</th><th>Stream</th><th class="text-center">Status</th><th class="text-center">Present</th><th>Remarks</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for row in attendance_report_data %}
+                        <tr class="border-bottom {% if row.present == 'No' %}table-danger{% endif %}">
+                            <td><code class="fw-bold font-monospace small text-secondary">{{ row.adm }}</code></td>
+                            <td class="fw-semibold text-dark">{{ row.name }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ row.stream }}</span></td>
+                            <td class="text-center">
+                                {% if row.present == 'Yes' %}
+                                    <span class="badge bg-success rounded-pill px-3">Present</span>
+                                {% else %}
+                                    <span class="badge bg-danger rounded-pill px-3">Absent</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">{{ row.present }}</td>
+                            <td class="small text-muted">{{ row.remarks|default:"—" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">No attendance records for today.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── GRADING REPORT ── -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-12">
+        <div class="card card-custom border-0 shadow-sm bg-white">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-journal-bookmark-fill me-2 text-info"></i>Grading Report — Exam Records</h5>
+                <a href="{% url 'export_report_csv' 'grading' %}?year={{ generation_date|date:'Y' }}" class="btn btn-outline-success btn-sm fw-semibold px-3">
+                    <i class="bi bi-download me-1"></i> Download Grading CSV
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr><th>Adm No</th><th>Student Name</th><th>Stream</th><th>Subject</th><th>Term</th><th>Year</th><th class="text-center">CAT 1</th><th class="text-center">CAT 2</th><th class="text-center">Final Exam</th><th class="text-end">Total Marks</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for row in grading_report_data %}
+                        <tr class="border-bottom">
+                            <td><code class="fw-bold font-monospace small text-secondary">{{ row.adm }}</code></td>
+                            <td class="fw-semibold text-dark">{{ row.name }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ row.stream }}</span></td>
+                            <td>{{ row.subject }}</td>
+                            <td>{{ row.term }}</td>
+                            <td>{{ row.year }}</td>
+                            <td class="text-center font-monospace">{{ row.cat1 }}</td>
+                            <td class="text-center font-monospace">{{ row.cat2 }}</td>
+                            <td class="text-center font-monospace">{{ row.exam }}</td>
+                            <td class="text-end fw-bold text-primary font-monospace">{{ row.total }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="10" class="text-center text-muted py-4">No exam records available.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

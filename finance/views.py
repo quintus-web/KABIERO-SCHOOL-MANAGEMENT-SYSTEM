@@ -14,7 +14,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 
 from .models import (
-    Student, ClassStream, Subject,
+    Student, ClassStream, Subject, FeeStructure,
     FeeInvoice, FeeReceipt,
     ExamRecord,
     StudentAttendanceRecord,
@@ -108,29 +108,168 @@ def _load_students_from_csv():
 
 @login_required
 def executive_analytics_kpi_dashboard(request):
-    total_learners = Student.objects.filter(is_active=True).count()
+    today = timezone.now().date()
+    active_students = Student.objects.filter(is_active=True, status='ACTIVE')
+    valid_streams = _get_valid_grade_streams()
+
+    total_learners = active_students.count()
+    total_streams = valid_streams.count()
+    total_subjects = Subject.objects.count()
     total_instructors = StaffProfile.objects.filter(role_designation='TEACHER', current_status='ACTIVE').count()
+    total_staff = StaffProfile.objects.filter(current_status='ACTIVE').count()
 
     total_invoiced = FeeInvoice.objects.aggregate(total=Sum('amount'))['total'] or 0.00
     total_collected = FeeReceipt.objects.filter(status='COMPLETED').aggregate(total=Sum('amount'))['total'] or 0.00
-    total_outstanding_arrears = Student.objects.filter(is_active=True).aggregate(total=Sum('current_balance'))['total'] or 0.00
-
+    total_outstanding_arrears = active_students.aggregate(total=Sum('current_balance'))['total'] or 0.00
     collection_efficiency = (float(total_collected) / float(total_invoiced) * 100) if total_invoiced > 0 else 0.0
 
+    term_fee_summary = []
+    for term in ['TERM_1', 'TERM_2', 'TERM_3']:
+        invoiced = FeeInvoice.objects.filter(term=term).aggregate(total=Sum('amount'))['total'] or 0.00
+        collected = FeeReceipt.objects.filter(status='COMPLETED', invoice__term=term).aggregate(total=Sum('amount'))['total'] or 0.00
+        term_fee_summary.append({
+            'term': term,
+            'label': term.replace('_', ' '),
+            'invoiced': float(invoiced),
+            'collected': float(collected),
+            'outstanding': float(invoiced - collected),
+            'rate': round((float(collected) / float(invoiced)) * 100, 1) if invoiced else 0.0
+        })
+
+    stream_breakdown = []
+    for stream in valid_streams:
+        students = active_students.filter(class_stream=stream).count()
+        invoiced = FeeInvoice.objects.filter(student__class_stream=stream).aggregate(total=Sum('amount'))['total'] or 0.00
+        collected = FeeReceipt.objects.filter(status='COMPLETED', student__class_stream=stream).aggregate(total=Sum('amount'))['total'] or 0.00
+        balance = active_students.filter(class_stream=stream).aggregate(total=Sum('current_balance'))['total'] or 0.00
+        stream_breakdown.append({
+            'stream': stream,
+            'students': students,
+            'invoiced': float(invoiced),
+            'collected': float(collected),
+            'balance': float(balance),
+            'rate': round((float(collected) / float(invoiced)) * 100, 1) if invoiced else 0.0
+        })
+
+    today_attendance = StudentAttendanceRecord.objects.filter(date=today)
+    attendance_present = today_attendance.filter(is_present=True).count()
+    attendance_absent = today_attendance.filter(is_present=False).count()
+    attendance_late = today_attendance.filter(status='LATE').count()
+    attendance_total = today_attendance.count()
+    attendance_rate = round((attendance_present / attendance_total) * 100, 1) if attendance_total else 0.0
+
+    exam_record_count = ExamRecord.objects.count()
+    assignments_total = HomeworkAssignment.objects.count()
+    overdue_assignments = HomeworkAssignment.objects.filter(submission_deadline__lt=today).count()
+    approved_plans = LessonPlan.objects.filter(is_approved=True).count()
+    pending_plans = LessonPlan.objects.filter(is_approved=False).count()
+    timetable_slots = TimetableSlot.objects.count()
+
     total_assets = SchoolAsset.objects.aggregate(total=Sum('total_quantity'))['total'] or 0
+    available_assets = SchoolAsset.objects.filter(status='OPERATIONAL').aggregate(total=Sum('available_quantity'))['total'] or 0
     assets_in_workshop = SchoolAsset.objects.filter(status='UNDER_REPAIR').count()
-    facility_operational_rate = ((total_assets - assets_in_workshop) / total_assets * 100) if total_assets > 0 else 100.0
+    maintenance_cost = AssetMaintenanceLog.objects.aggregate(total=Sum('cost_incurred_kes'))['total'] or 0.00
+    facility_operational_rate = round(((total_assets - assets_in_workshop) / total_assets) * 100, 1) if total_assets > 0 else 100.0
+
+    subject_performance = []
+    for subject in Subject.objects.all():
+        records = ExamRecord.objects.filter(subject=subject)
+        average_score = sum(record.total_marks for record in records) / records.count() if records else 0.0
+        subject_performance.append({
+            'subject': subject,
+            'records': records.count(),
+            'average': round(average_score, 1)
+        })
+    subject_performance.sort(key=lambda item: item['average'], reverse=True)
+
+    recent_payments = FeeReceipt.objects.select_related('student__class_stream').filter(status='COMPLETED').order_by('-date_paid')[:8]
+    recent_invoices = FeeInvoice.objects.select_related('student__class_stream').order_by('-date_issued')[:8]
+    defaulters = active_students.select_related('class_stream').filter(current_balance__gt=0).order_by('-current_balance')[:8]
+
+    activity_logs = [
+        {"time": "Just now", "title": "Executive KPI dashboard refreshed", "detail": "Live finance, academic, attendance, and asset metrics loaded.", "status": "SUCCESS", "icon": "bi-graph-up-arrow"},
+        {"time": "Today", "title": f"{attendance_present} learners marked present", "detail": f"{attendance_absent} absent and {attendance_late} late records captured for today.", "status": "ALERT" if attendance_absent else "SUCCESS", "icon": "bi-calendar-check"},
+        {"time": "This term", "title": f"{assignments_total} homework assignments posted", "detail": f"{overdue_assignments} assignments are currently overdue.", "status": "ALERT" if overdue_assignments else "SUCCESS", "icon": "bi-book"},
+        {"time": "Operations", "title": f"{assets_in_workshop} assets under repair", "detail": f"KES {float(maintenance_cost):,.0f} logged in maintenance costs.", "status": "WARNING" if assets_in_workshop else "SUCCESS", "icon": "bi-tools"},
+    ]
+
+    # ── EXECUTIVE REPORT DATA ──
+    finance_report_data = []
+    for s in active_students.select_related('class_stream'):
+        s_inv = FeeInvoice.objects.filter(student=s).aggregate(total=Sum('amount'))['total'] or 0
+        s_rec = FeeReceipt.objects.filter(status='COMPLETED', student=s).aggregate(total=Sum('amount'))['total'] or 0
+        finance_report_data.append({
+            'adm': s.admission_number,
+            'name': f"{s.first_name} {s.last_name}",
+            'stream': s.class_stream.name if s.class_stream else 'Unassigned',
+            'invoiced': float(s_inv),
+            'collected': float(s_rec),
+            'balance': float(s_inv - s_rec),
+            'rate': round((float(s_rec)/float(s_inv))*100,1) if s_inv else 0.0
+        })
+
+    attendance_report_data = []
+    for rec in StudentAttendanceRecord.objects.filter(date=today).select_related('student__class_stream').order_by('student__first_name'):
+        attendance_report_data.append({
+            'adm': rec.student.admission_number,
+            'name': f"{rec.student.first_name} {rec.student.last_name}",
+            'stream': rec.student.class_stream.name if rec.student.class_stream else 'Unassigned',
+            'status': rec.get_status_display(),
+            'present': 'Yes' if rec.is_present else 'No',
+            'remarks': rec.remarks or ''
+        })
+
+    grading_report_data = []
+    for rec in ExamRecord.objects.all().select_related('student', 'student__class_stream', 'subject').order_by('-year', 'student__last_name')[:50]:
+        grading_report_data.append({
+            'adm': rec.student.admission_number,
+            'name': f"{rec.student.first_name} {rec.student.last_name}",
+            'stream': rec.student.class_stream.name if rec.student.class_stream else 'Unassigned',
+            'subject': rec.subject.name,
+            'term': rec.term.replace('_', ' '),
+            'year': rec.year,
+            'cat1': rec.cat_1,
+            'cat2': rec.cat_2,
+            'exam': rec.final_exam,
+            'total': rec.total_marks
+        })
 
     return render(request, "finance/executive_reporting.html", {
         "total_students": total_learners,
         "total_teachers": total_instructors,
+        "total_staff": total_staff,
+        "total_streams": total_streams,
+        "total_subjects": total_subjects,
         "total_invoiced": total_invoiced,
         "total_collected": total_collected,
         "total_arrears": total_outstanding_arrears,
         "collection_efficiency": round(collection_efficiency, 1),
-        "operational_rate": round(facility_operational_rate, 1),
+        "operational_rate": facility_operational_rate,
         "assets_at_risk": assets_in_workshop,
-        "generation_date": timezone.now().date()
+        "available_assets": available_assets,
+        "maintenance_cost": maintenance_cost,
+        "term_fee_summary": term_fee_summary,
+        "stream_breakdown": stream_breakdown,
+        "attendance_total": attendance_total,
+        "attendance_present": attendance_present,
+        "attendance_absent": attendance_absent,
+        "attendance_late": attendance_late,
+        "attendance_rate": attendance_rate,
+        "exam_record_count": exam_record_count,
+        "assignments_total": assignments_total,
+        "overdue_assignments": overdue_assignments,
+        "approved_plans": approved_plans,
+        "pending_plans": pending_plans,
+        "timetable_slots": timetable_slots,
+        "subject_performance": subject_performance[:8],
+        "recent_payments": recent_payments,
+        "recent_invoices": recent_invoices,
+        "defaulters": defaulters,
+        "activity_logs": activity_logs,
+        "generation_date": today,
+        "finance_report_data": finance_report_data,
+        "attendance_report_data": attendance_report_data,
+        "grading_report_data": grading_report_data,
     })
 
 
@@ -323,6 +462,71 @@ def fee_structure(request):
 
 
 @login_required
+def invoice_list(request):
+    term = request.GET.get("term", "")
+    level = request.GET.get("level", "")
+    status_filter = request.GET.get("status", "all")
+
+    qs = FeeInvoice.objects.all().select_related('student', 'student__class_stream').order_by('-date_issued')
+    if term:
+        qs = qs.filter(term=term)
+    if level:
+        qs = qs.filter(student__class_stream__name=level)
+    if status_filter == "paid":
+        qs = qs.filter(fee_receipts__status='COMPLETED').distinct()
+    elif status_filter == "unpaid":
+        qs = qs.filter(fee_receipts__status__isnull=True)
+
+    levels = _get_valid_grade_names()
+    terms = ['TERM_1', 'TERM_2', 'TERM_3']
+    total_amount = qs.aggregate(total=Sum('amount'))['total'] or 0
+
+    return render(request, "finance/invoice_list.html", {
+        "invoices": qs,
+        "levels": levels,
+        "terms": terms,
+        "selected_term": term,
+        "selected_level": level,
+        "selected_status": status_filter,
+        "total_amount": float(total_amount),
+        "current_page": "invoices"
+    })
+
+
+@login_required
+def generate_invoice_pdf(request, invoice_id):
+    invoice = get_object_or_404(FeeInvoice.objects.select_related('student', 'student__class_stream'), id=invoice_id)
+    receipts = FeeReceipt.objects.filter(invoice=invoice, status='COMPLETED').order_by('-date_paid')
+    total_paid = sum((r.amount for r in receipts), Decimal("0.00"))
+    balance = invoice.amount - total_paid
+
+    context = {
+        'invoice': invoice,
+        'receipts': receipts,
+        'total_paid': float(total_paid),
+        'balance': float(balance),
+        'today': timezone.now(),
+    }
+
+    try:
+        from weasyprint import HTML
+        from django.template.loader import render_to_string
+        html_string = render_to_string('finance/invoice_printout.html', context)
+        response = HttpResponse(content_type='application/pdf')
+        filename = f"invoice_INV-{invoice.id}_{invoice.student.admission_number}.pdf"
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        HTML(string=html_string).write_pdf(response)
+        return response
+    except (ImportError, OSError):
+        from django.template.loader import render_to_string
+        html_string = render_to_string('finance/invoice_printout.html', context)
+        response = HttpResponse(html_string, content_type='text/html')
+        response['Content-Disposition'] = f'inline; filename="invoice_INV-{invoice.id}_{invoice.student.admission_number}.html"'
+        messages.info(request, "PDF engine unavailable - rendering print-friendly HTML. Use browser Print to save as PDF.")
+        return response
+
+
+@login_required
 def financial_analytics(request):
     from collections import defaultdict
     from django.db.models import Sum, Count, Q, F
@@ -471,7 +675,47 @@ def teacher_sms_broadcast(request):
                 result = resp.json()
                 if result.get("SMSMessageData", {}).get("Recipients"):
                     success_count += 1
-                else:
+    elif report_type == "attendance":
+        stream = request.GET.get("stream_id", "")
+        date_from = request.GET.get("date_from", "")
+        date_to = request.GET.get("date_to", "")
+        qs = StudentAttendanceRecord.objects.all().select_related('student__class_stream')
+        if stream:
+            qs = qs.filter(student__class_stream__name=stream)
+        if date_from:
+            qs = qs.filter(date__gte=date_from)
+        if date_to:
+            qs = qs.filter(date__lte=date_to)
+        report_data = []
+        for rec in qs.order_by('-date', 'student__first_name'):
+            report_data.append({
+                'log': rec, 'date': rec.date
+            })
+        report_title = "Attendance Register"
+        headers = ["Date", "Admission No", "Student Name", "Stream", "Status", "Remarks"]
+
+    elif report_type == "grading":
+        term_g = request.GET.get("term", "TERM_1")
+        stream_g = request.GET.get("stream", "")
+        subject_g = request.GET.get("subject", "")
+        year_g = int(request.GET.get("year", 2026))
+        subjects_qs = Subject.objects.all().order_by('name')
+        qs = ExamRecord.objects.filter(term=term_g, year=year_g).select_related('student', 'student__class_stream', 'subject')
+        if stream_g:
+            qs = qs.filter(student__class_stream__name=stream_g)
+        if subject_g:
+            qs = qs.filter(subject_id=subject_g)
+        report_data = []
+        for rec in qs.order_by('student__last_name', 'subject__name'):
+            report_data.append({
+                'student': rec.student, 'subject': rec.subject, 'term': rec.term,
+                'year': rec.year, 'cat_1': rec.cat_1, 'cat_2': rec.cat_2,
+                'final_exam': rec.final_exam, 'total_marks': rec.total_marks
+            })
+        report_title = f"Grading Register - {term_g.replace('_',' ')} {year_g}"
+        headers = ["Admission No", "Student Name", "Stream", "Subject", "Term", "Year", "CAT 1", "CAT 2", "Final Exam", "Total Marks"]
+
+    else:
                     error_count += 1
             except Exception:
                 error_count += 1
@@ -644,7 +888,35 @@ def inventory_asset_control_deck(request):
 
 @login_required
 def academic_management_hub(request):
-    return render(request, "finance/academic_hub.html")
+    VALID_GRADES = ["Playgroup", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
+    grade_summary = []
+    for grade in VALID_GRADES:
+        count = Student.objects.filter(status='ACTIVE', is_active=True, class_stream__name=grade).count()
+        grade_summary.append({'grade': grade, 'count': count})
+
+    streams = _get_valid_grade_streams()
+    selected_stream_id = request.GET.get("stream_id")
+    if selected_stream_id:
+        active_stream = streams.filter(id=selected_stream_id).first()
+    else:
+        active_stream = streams.first()
+
+    timetable = []
+    lesson_plans = []
+    learning_materials = []
+    if active_stream:
+        timetable = TimetableSlot.objects.filter(stream=active_stream).select_related('subject', 'teacher', 'stream').order_by('day', 'time_start')
+        lesson_plans = LessonPlan.objects.filter(stream=active_stream).select_related('subject', 'teacher').order_by('-week_number')[:10]
+        learning_materials = LearningMaterial.objects.filter(subject__in=Subject.objects.all()).order_by('-date_uploaded')[:10]
+
+    return render(request, "finance/academic_hub.html", {
+        "grade_summary": grade_summary,
+        "streams": streams,
+        "active_stream": active_stream,
+        "timetable": timetable,
+        "lesson_plans": lesson_plans,
+        "learning_materials": learning_materials,
+    })
 
 
 @login_required
@@ -879,6 +1151,242 @@ def add_new_student_onboarding(request):
     return redirect('/registry/learners/')
 
 
+# =========================================================
+# 10. REPORT HUB & CSV EXPORT ENGINE
+# =========================================================
+
+@login_required
+def finance_reports_hub(request):
+    report_type = request.GET.get("type", "collection")
+    term = request.GET.get("term", "TERM_1")
+    level = request.GET.get("level", "")
+    year = int(request.GET.get("year", 2026))
+
+    levels = _get_valid_grade_names()
+    students_qs = Student.objects.filter(status='ACTIVE')
+    if level:
+        students_qs = students_qs.filter(class_stream__name=level)
+
+    if report_type == "collection":
+        invoices = FeeInvoice.objects.filter(term=term, year=year)
+        receipts = FeeReceipt.objects.filter(invoice__term=term, invoice__year=year)
+        if level:
+            invoices = invoices.filter(student__class_stream__name=level)
+            receipts = receipts.filter(student__class_stream__name=level)
+        report_data = []
+        for s in students_qs.select_related('class_stream'):
+            s_inv = invoices.filter(student=s).aggregate(total=Sum('amount'))['total'] or 0
+            s_rec = receipts.filter(student=s).aggregate(total=Sum('amount'))['total'] or 0
+            report_data.append({
+                'student': s, 'stream': s.class_stream.name if s.class_stream else 'Unassigned',
+                'invoiced': float(s_inv), 'collected': float(s_rec),
+                'balance': float(s_inv - s_rec), 'rate': round((float(s_rec)/float(s_inv))*100,1) if s_inv else 0.0
+            })
+        report_title = f"Fee Collection Report - {term.replace('_',' ')} {year}"
+        headers = ["Admission No", "Student Name", "Stream", "Invoiced (KES)", "Collected (KES)", "Balance (KES)", "Rate %"]
+
+    elif report_type == "invoices":
+        qs = FeeInvoice.objects.filter(term=term, year=year).select_related('student__class_stream')
+        if level:
+            qs = qs.filter(student__class_stream__name=level)
+        report_data = []
+        for inv in qs:
+            report_data.append({
+                'invoice_id': inv.id, 'date': inv.date_issued, 'adm': inv.student.admission_number,
+                'student': f"{inv.student.first_name} {inv.student.last_name}",
+                'stream': inv.student.class_stream.name if inv.student.class_stream else 'Unassigned',
+                'title': inv.title, 'amount': float(inv.amount), 'description': inv.description or ''
+            })
+        report_title = f"Invoice Register - {term.replace('_',' ')} {year}"
+        headers = ["Invoice ID", "Date Issued", "Admission No", "Student Name", "Stream", "Title", "Amount (KES)", "Description"]
+
+    elif report_type == "receipts":
+        qs = FeeReceipt.objects.filter(invoice__term=term, invoice__year=year).select_related('student__class_stream', 'invoice')
+        if level:
+            qs = qs.filter(student__class_stream__name=level)
+        report_data = []
+        for r in qs:
+            report_data.append({
+                'ref': r.reference_code, 'date': r.date_paid.date() if r.date_paid else r.date_issued.date(),
+                'adm': r.student.admission_number, 'student': f"{r.student.first_name} {r.student.last_name}",
+                'stream': r.student.class_stream.name if r.student.class_stream else 'Unassigned',
+                'channel': r.get_payment_channel_display(), 'amount': float(r.amount), 'status': r.get_status_display()
+            })
+        report_title = f"Receipt Register - {term.replace('_',' ')} {year}"
+        headers = ["Reference", "Date Paid", "Admission No", "Student Name", "Stream", "Channel", "Amount (KES)", "Status"]
+
+    elif report_type == "defaulters":
+        qs = Student.objects.filter(current_balance__gt=0, status='ACTIVE').select_related('class_stream')
+        if level:
+            qs = qs.filter(class_stream__name=level)
+        report_data = []
+        for s in qs.order_by('-current_balance'):
+            report_data.append({
+                'adm': s.admission_number, 'student': f"{s.first_name} {s.last_name}",
+                'stream': s.class_stream.name if s.class_stream else 'Unassigned',
+                'balance': float(s.current_balance), 'phone': s.parent_phone
+            })
+        report_title = "Fee Defaulters Report"
+        headers = ["Admission No", "Student Name", "Stream", "Balance (KES)", "Parent Phone"]
+
+    else:
+        report_data = []
+        report_title = "Unknown Report"
+        headers = []
+
+    return render(request, "finance/reports_hub.html", {
+        "report_type": report_type, "report_data": report_data, "report_title": report_title,
+        "headers": headers, "levels": levels, "selected_level": level,
+        "selected_term": term, "selected_year": year, "terms": ['TERM_1','TERM_2','TERM_3'],
+        "subjects": _get_subjects(), "current_page": "reports"
+    })
+
+
+@login_required
+def export_report_csv(request, report_type):
+    term = request.GET.get("term", "TERM_1")
+    level = request.GET.get("level", "")
+    year = int(request.GET.get("year", 2026))
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{report_type}_{term}_{year}.csv"'
+
+    writer = csv.writer(response)
+
+    if report_type == "collection":
+        students_qs = Student.objects.filter(status='ACTIVE')
+        if level:
+            students_qs = students_qs.filter(class_stream__name=level)
+        invoices = FeeInvoice.objects.filter(term=term, year=year)
+        receipts = FeeReceipt.objects.filter(invoice__term=term, invoice__year=year)
+        if level:
+            invoices = invoices.filter(student__class_stream__name=level)
+            receipts = receipts.filter(student__class_stream__name=level)
+        writer.writerow(["Admission No", "Student Name", "Stream", "Invoiced (KES)", "Collected (KES)", "Balance (KES)", "Collection Rate %"])
+        for s in students_qs.select_related('class_stream'):
+            s_inv = invoices.filter(student=s).aggregate(total=Sum('amount'))['total'] or 0
+            s_rec = receipts.filter(student=s).aggregate(total=Sum('amount'))['total'] or 0
+            rate = round((float(s_rec)/float(s_inv))*100,1) if s_inv else 0.0
+            writer.writerow([s.admission_number, f"{s.first_name} {s.last_name}",
+                             s.class_stream.name if s.class_stream else "Unassigned",
+                             float(s_inv), float(s_rec), float(s_inv - s_rec), rate])
+
+    elif report_type == "invoices":
+        qs = FeeInvoice.objects.filter(term=term, year=year).select_related('student__class_stream')
+        if level:
+            qs = qs.filter(student__class_stream__name=level)
+        writer.writerow(["Invoice ID", "Date Issued", "Admission No", "Student Name", "Stream", "Title", "Amount (KES)", "Description"])
+        for inv in qs:
+            writer.writerow([inv.id, inv.date_issued, inv.student.admission_number,
+                             f"{inv.student.first_name} {inv.student.last_name}",
+                             inv.student.class_stream.name if inv.student.class_stream else "Unassigned",
+                             inv.title, float(inv.amount), inv.description or ""])
+
+    elif report_type == "receipts":
+        qs = FeeReceipt.objects.filter(invoice__term=term, invoice__year=year).select_related('student__class_stream', 'invoice')
+        if level:
+            qs = qs.filter(student__class_stream__name=level)
+        writer.writerow(["Reference", "Date Paid", "Admission No", "Student Name", "Stream", "Channel", "Amount (KES)", "Status"])
+        for r in qs:
+            writer.writerow([r.reference_code, r.date_paid.date() if r.date_paid else r.date_issued.date(),
+                             r.student.admission_number, f"{r.student.first_name} {r.student.last_name}",
+                             r.student.class_stream.name if r.student.class_stream else "Unassigned",
+                             r.get_payment_channel_display(), float(r.amount), r.get_status_display()])
+
+    elif report_type == "defaulters":
+        qs = Student.objects.filter(current_balance__gt=0, status='ACTIVE').select_related('class_stream')
+        if level:
+            qs = qs.filter(class_stream__name=level)
+        writer.writerow(["Admission No", "Student Name", "Stream", "Balance (KES)", "Parent Phone"])
+        for s in qs.order_by('-current_balance'):
+            writer.writerow([s.admission_number, f"{s.first_name} {s.last_name}",
+                             s.class_stream.name if s.class_stream else "Unassigned",
+                             float(s.current_balance), s.parent_phone])
+
+    elif report_type == "attendance":
+        stream = request.GET.get("stream_id", "")
+        date_from = request.GET.get("date_from", "")
+        date_to = request.GET.get("date_to", "")
+        qs = StudentAttendanceRecord.objects.all().select_related('student__class_stream')
+        if stream:
+            qs = qs.filter(student__class_stream__name=stream)
+        if date_from:
+            qs = qs.filter(date__gte=date_from)
+        if date_to:
+            qs = qs.filter(date__lte=date_to)
+        writer.writerow(["Date", "Admission No", "Student Name", "Stream", "Status", "Is Present", "Remarks", "Logged At"])
+        for rec in qs.order_by('-date', 'student__first_name'):
+            writer.writerow([rec.date, rec.student.admission_number,
+                             f"{rec.student.first_name} {rec.student.last_name}",
+                             rec.student.class_stream.name if rec.student.class_stream else "Unassigned",
+                             rec.get_status_display(), "Yes" if rec.is_present else "No",
+                             rec.remarks or "", rec.logged_at.strftime("%Y-%m-%d %H:%M") if rec.logged_at else ""])
+
+    elif report_type == "grading":
+        term_g = request.GET.get("term", "TERM_1")
+        stream_g = request.GET.get("stream", "")
+        subject_g = request.GET.get("subject", "")
+        year_g = int(request.GET.get("year", 2026))
+        qs = ExamRecord.objects.filter(term=term_g, year=year_g).select_related('student', 'student__class_stream', 'subject')
+        if stream_g:
+            qs = qs.filter(student__class_stream__name=stream_g)
+        if subject_g:
+            qs = qs.filter(subject_id=subject_g)
+        writer.writerow(["Admission No", "Student Name", "Stream", "Subject", "Term", "Year", "CAT 1", "CAT 2", "Final Exam", "Total Marks"])
+        for rec in qs.order_by('student__last_name', 'subject__name'):
+            writer.writerow([rec.student.admission_number, f"{rec.student.first_name} {rec.student.last_name}",
+                             rec.student.class_stream.name if rec.student.class_stream else "Unassigned",
+                             rec.subject.name, rec.term, rec.year, rec.cat_1, rec.cat_2, rec.final_exam, rec.total_marks])
+
+    return response
+
+
+@login_required
+def generate_bulk_invoices(request):
+    if request.method == "POST":
+        term = request.POST.get("term", "TERM_1")
+        level = request.POST.get("level", "")
+        year = int(request.POST.get("year", 2026))
+        use_fee_structure = request.POST.get("use_fee_structure") == "on"
+        custom_amount = request.POST.get("custom_amount", "")
+
+        students = Student.objects.filter(status='ACTIVE', is_active=True)
+        if level:
+            students = students.filter(class_stream__name=level)
+
+        created = 0
+        for s in students:
+            if use_fee_structure:
+                fee_entry = FeeStructure.objects.filter(level=s.class_stream.name, term=term, year=year).first()
+                amount = fee_entry.amount if fee_entry else Decimal("0.00")
+            else:
+                try:
+                    amount = Decimal(custom_amount) if custom_amount else Decimal("0.00")
+                except Exception:
+                    amount = Decimal("0.00")
+
+            if amount > 0:
+                FeeInvoice.objects.get_or_create(
+                    student=s, term=term, year=year,
+                    defaults={
+                        'title': f"{s.class_stream.name if s.class_stream else 'Unassigned'} {term.replace('_',' ')} {year} Invoice",
+                        'amount': amount,
+                        'description': f"Auto-generated fee invoice for {term.replace('_',' ')} {year}"
+                    }
+                )
+                created += 1
+
+        messages.success(request, f"Bulk invoice generation complete. {created} invoices created.")
+        return redirect('finance_reports')
+
+    schedules = FeeStructure.objects.all().order_by('level', 'term')
+    levels = _get_valid_grade_names()
+    return render(request, "finance/generate_bulk_invoices.html", {
+        "schedules": schedules, "levels": levels,
+        "terms": ['TERM_1', 'TERM_2', 'TERM_3'], "current_year": 2026
+    })
+
+
 # ========================================================
 # 10. COMPATIBILITY ALIAS MATRIX
 # ========================================================
@@ -993,6 +1501,61 @@ def delete_student_record(request, student_id):
         
     # Fallback to confirmation prompt if anyone hits via GET
     return render(request, "finance/confirm_delete.html", {"student": student})
+
+
+@login_required
+def grade_promotion_dashboard(request):
+    VALID_GRADES = ["Playgroup", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
+    grade_summary = []
+    for grade in VALID_GRADES:
+        count = Student.objects.filter(status='ACTIVE', is_active=True, class_stream__name=grade).count()
+        grade_summary.append({'grade': grade, 'count': count})
+
+    promoted_count = 0
+    graduated_count = 0
+    skipped_count = 0
+    promotion_details = []
+
+    if request.method == "POST":
+        selected_grade = request.POST.get("selected_grade")
+        active_students = Student.objects.filter(status='ACTIVE', is_active=True).exclude(class_stream__isnull=True)
+
+        if selected_grade and selected_grade != "ALL":
+            active_students = active_students.filter(class_stream__name=selected_grade)
+
+        for student in active_students:
+            current_grade = student.class_stream.name
+            idx = VALID_GRADES.index(current_grade) if current_grade in VALID_GRADES else -1
+
+            if idx < 0 or idx >= len(VALID_GRADES) - 1:
+                skipped_count += 1
+                promotion_details.append({'student': student, 'action': 'Skipped', 'reason': 'No higher grade available'})
+                continue
+
+            if current_grade == "Grade 6":
+                student.status = 'GRADUATED'
+                student.is_active = False
+                student.class_stream = None
+                graduated_count += 1
+                promotion_details.append({'student': student, 'action': 'Graduated', 'reason': 'Completed Grade 6'})
+            else:
+                next_grade = VALID_GRADES[idx + 1]
+                new_stream, _ = ClassStream.objects.get_or_create(name=next_grade)
+                student.class_stream = new_stream
+                promoted_count += 1
+                promotion_details.append({'student': student, 'action': 'Promoted', 'reason': f'Moved to {next_grade}'})
+
+            student.save()
+
+        messages.success(request, f"Promotion complete: {promoted_count} promoted, {graduated_count} graduated, {skipped_count} skipped.")
+
+    return render(request, "finance/grade_promotion.html", {
+        "grade_summary": grade_summary,
+        "promoted_count": promoted_count,
+        "graduated_count": graduated_count,
+        "skipped_count": skipped_count,
+        "promotion_details": promotion_details,
+    })
 
 
 @login_required
@@ -1197,4 +1760,4 @@ def post_homework_assignment(request):
         "subjects": subjects,
         "streams": streams,
         "recent_assignments": recent_assignments,
-    })
+    }) 

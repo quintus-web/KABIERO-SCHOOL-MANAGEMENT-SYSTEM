@@ -1,0 +1,104 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Generate Bulk Invoices - Crescent Heights Academy{% endblock %}
+
+{% block content %}
+<div class="mb-3 no-print">
+    <a href="{% url 'finance_reports' %}" class="btn btn-sm btn-outline-secondary rounded-3">
+        <i class="bi bi-arrow-left"></i> Back to Reports Hub
+    </a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold text-dark mb-1">Generate Bulk Invoices</h3>
+        <p class="text-muted small text-uppercase fw-semibold mb-0">Create term invoices for all active students at once</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm bg-white" style="border-radius: 16px;">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-dark mb-3">Invoice Configuration</h5>
+                <form method="POST" class="row g-3">
+                    {% csrf_token %}
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold text-muted">Term</label>
+                        <select name="term" class="form-select" style="border-radius: 10px;">
+                            {% for t in terms %}
+                            <option value="{{ t }}">{{ t|title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold text-muted">Level / Stream (optional)</label>
+                        <select name="level" class="form-select" style="border-radius: 10px;">
+                            <option value="">All Levels</option>
+                            {% for lvl in levels %}
+                            <option value="{{ lvl }}">{{ lvl }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold text-muted">Year</label>
+                        <input type="number" name="year" value="{{ current_year }}" class="form-control" style="border-radius: 10px;">
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" name="use_fee_structure" id="useFeeStructure" checked>
+                            <label class="form-check-label fw-semibold small text-dark" for="useFeeStructure">Use Fee Structure Amounts</label>
+                        </div>
+                        <div id="customAmountField" style="display: none;">
+                            <label class="form-label small fw-semibold text-muted">Custom Amount per Student (KES)</label>
+                            <input type="number" step="0.01" name="custom_amount" value="0" class="form-control" style="border-radius: 10px;" placeholder="Enter amount in KES">
+                        </div>
+                    </div>
+                    <div class="col-12 mt-4">
+                        <button type="submit" class="btn btn-primary fw-bold w-100" style="border-radius: 10px; height: 48px;">
+                            <i class="bi bi-plus-circle me-2"></i> Generate Invoices
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm bg-white" style="border-radius: 16px;">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-dark mb-3">Fee Structure Reference</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Level</th>
+                                <th>Term 1</th>
+                                <th>Term 2</th>
+                                <th>Term 3</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for level_name, schedule in grouped.items %}
+                            <tr class="border-bottom">
+                                <td class="fw-semibold text-dark">{{ level_name }}</td>
+                                <td class="font-monospace small">KES {{ schedule.TERM_1|default:"—"|floatformat:0 }}</td>
+                                <td class="font-monospace small">KES {{ schedule.TERM_2|default:"—"|floatformat:0 }}</td>
+                                <td class="font-monospace small">KES {{ schedule.TERM_3|default:"—"|floatformat:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted small mt-3 mb-0"><i class="bi bi-info-circle me-1"></i> When using Fee Structure, invoices will be generated for each active student in the selected level using the term's configured amount. Students without a fee schedule entry will receive a zero-amount invoice.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('useFeeStructure').addEventListener('change', function() {
+    document.getElementById('customAmountField').style.display = this.checked ? 'none' : 'block';
+});
+</script>
+{% endblock %}
