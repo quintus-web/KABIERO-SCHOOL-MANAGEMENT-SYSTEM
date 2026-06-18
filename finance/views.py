@@ -1441,3 +1441,32 @@ def developer_debug_console_hub(request):
         'raw_staff': StaffProfile.objects.all().select_related('user'),
     }
     return render(request, 'finance/developer_debug_console.html', context)
+
+
+@login_required
+def academic_management_hub(request):
+    streams = _get_valid_grade_streams()
+    selected_stream_id = request.GET.get("stream_id")
+    if selected_stream_id:
+        active_stream = streams.filter(id=selected_stream_id).first()
+    else:
+        active_stream = streams.first()
+    timetable = []
+    lesson_plans = []
+    learning_materials = []
+    if active_stream:
+        timetable = TimetableSlot.objects.filter(stream=active_stream).select_related('subject', 'teacher', 'stream').order_by('day', 'time_start')
+        lesson_plans = LessonPlan.objects.filter(stream=active_stream).select_related('subject', 'teacher').order_by('-week_number')[:10]
+        learning_materials = LearningMaterial.objects.filter(subject__in=Subject.objects.all()).order_by('-date_uploaded')[:10]
+    return render(request, "finance/academic_hub.html", {
+        "streams": streams,
+        "active_stream": active_stream,
+        "timetable": timetable,
+        "lesson_plans": lesson_plans,
+        "learning_materials": learning_materials,
+        "total_subjects": Subject.objects.count(),
+    })
+
+
+@login_required
+def marks_entry_portal(request):
