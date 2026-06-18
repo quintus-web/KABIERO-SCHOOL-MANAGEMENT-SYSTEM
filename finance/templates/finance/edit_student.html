@@ -33,7 +33,7 @@
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Class Stream Assignation</label>
-                        <input type="text" name="class_stream" class="form-control" value="{{ student.class_stream.name }}" required>
+                        <input type="text" name="class_stream" class="form-control" value="{% if student.class_stream %}{{ student.class_stream.name }}{% endif %}" required>
                     </div>
                 </div>
                 <div class="mb-3">

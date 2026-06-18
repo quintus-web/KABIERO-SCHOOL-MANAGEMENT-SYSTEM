@@ -18,7 +18,7 @@
         <div class="p-3 bg-light rounded border mb-4">
             <strong>Name:</strong> {{ student.first_name }} {{ student.last_name }} | 
             <strong>Adm No:</strong> <code>{{ student.admission_number }}</code> | 
-            <strong>Class:</strong> {{ student.class_stream.name }}
+            <strong>Class:</strong> {% if student.class_stream %}{{ student.class_stream.name }}{% else %}Unassigned{% endif %}
         </div>
         <table class="table table-bordered text-center">
             <thead class="table-dark"><tr><th>Subject</th><th>CAT 1</th><th>CAT 2</th><th>Final</th><th>Total</th><th>Grade</th></tr></thead>

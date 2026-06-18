@@ -176,7 +176,7 @@
                 <h1 class="h3 fw-bold mb-1" style="font-family: 'Syne', sans-serif;">{{ student.first_name }} {{ student.last_name }}</h1>
                 <p class="text-white-50 small mb-0 d-flex flex-wrap gap-3">
                     <span><i class="bi bi-hash me-1"></i><strong>Adm:</strong> {{ student.admission_number }}</span>
-                    <span><i class="bi bi-door-open me-1"></i><strong>Class:</strong> {{ student.class_stream.name }}</span>
+                    <span><i class="bi bi-door-open me-1"></i><strong>Class:</strong> {% if student.class_stream %}{{ student.class_stream.name }}{% else %}Unassigned{% endif %}</span>
                     <span><i class="bi bi-droplet-fill me-1 text-danger"></i><strong>Blood Group:</strong> {{ student.blood_group|default:"Not Configured" }}</span>
                 </p>
             </div>
