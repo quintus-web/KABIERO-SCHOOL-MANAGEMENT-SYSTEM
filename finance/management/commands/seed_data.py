@@ -3,7 +3,8 @@ import os
 import csv
 from decimal import Decimal
 from django.core.management.base import BaseCommand
-from finance.models import Student, ClassStream, Subject, FeeStructure, FeeInvoice
+from django.contrib.auth.models import User
+from finance.models import Student, ClassStream, Subject, FeeStructure, FeeInvoice, StaffProfile
 
 VALID_GRADES = ["Playgroup", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
 
@@ -137,3 +138,17 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f"Milestone 1 Complete! {stream_count} streams, {student_count} students, {invoice_count} invoices."
         ))
+
+        # Create admin user
+        user, _ = User.objects.get_or_create(
+            username='admin',
+            defaults={
+                'is_superuser': True,
+                'is_staff': True,
+                'is_active': True,
+                'email': 'admin@admin.com'
+            }
+        )
+        user.set_password('sms_pass2026')
+        user.save()
+        self.stdout.write(self.style.SUCCESS("Created admin user (username: admin, password: sms_pass2026)"))
