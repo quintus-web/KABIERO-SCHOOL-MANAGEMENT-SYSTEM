@@ -17,7 +17,7 @@ class Command(BaseCommand):
     help = "Parses the master school CSV dataset and seeds the SQLite database tables seamlessly."
 
     def handle(self, *args, **options):
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
         csv_path = os.path.join(base_dir, "Crescent Heights School - STUDENTS.csv")
         fees_path = os.path.join(base_dir, "Crescent_Heights_Fees_2026.csv")
 
