@@ -18,6 +18,10 @@ services:
         value: "crescent-heoghts-school-management-system.onrender.com"
       - key: CSRF_TRUSTED_ORIGINS
         value: "https://crescent-heoghts-school-management-system.onrender.com"
+      - key: DEFAULT_ADMIN_USERNAME
+        value: "admin"
+      - key: DEFAULT_ADMIN_PASSWORD
+        value: "sms_pass2026"
     databases:
       - name: school-db
         plan: free

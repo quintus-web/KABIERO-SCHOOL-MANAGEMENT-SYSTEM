@@ -29,11 +29,19 @@
         }
         .main-workspace-content { flex: 1; margin-left: 260px; padding: 2rem; min-width: 0; }
         .sidebar-brand { padding: 1.5rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.06); background-color: #0b0f19; position: sticky; top: 0; z-index: 10; }
-        .sidebar-menu-list { padding: 1.5rem 0.75rem; list-style: none; margin: 0; flex: 1; }
-        .sidebar-menu-item { margin-bottom: 0.4rem; }
-        .sidebar-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; color: rgba(255,255,255,0.7) !important; text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 0.88rem; transition: all 0.2s ease-in-out; }
+        .sidebar-menu-list { padding: 1rem 0.75rem; list-style: none; margin: 0; flex: 1; }
+        .sidebar-menu-item { margin-bottom: 0.25rem; }
+        .sidebar-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.72rem 0.9rem; color: rgba(255,255,255,0.74) !important; text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 0.86rem; transition: all 0.2s ease-in-out; }
         .sidebar-link:hover { background-color: rgba(255,255,255,0.05); color: #38bdf8 !important; }
         .sidebar-link.active-link { background-color: #2563eb; color: #ffffff !important; font-weight: 600; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+        .sidebar-section { margin-top: 0.65rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.55rem; }
+        .sidebar-section summary { list-style: none; cursor: pointer; user-select: none; }
+        .sidebar-section summary::-webkit-details-marker { display: none; }
+        .sidebar-section-toggle { color: rgba(255,255,255,0.9) !important; font-weight: 700; }
+        .sidebar-section-toggle .bi-chevron-right { margin-left: auto; font-size: 0.8rem; transition: transform 0.2s ease; }
+        .sidebar-section[open] .sidebar-section-toggle .bi-chevron-right { transform: rotate(90deg); }
+        .sidebar-submenu { list-style: none; margin: 0.2rem 0 0; padding: 0 0 0 1.95rem; }
+        .sidebar-submenu .sidebar-link { padding: 0.55rem 0.7rem; font-size: 0.8rem; color: rgba(255,255,255,0.62) !important; }
         .sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.06); background-color: #0b0f19; position: sticky; bottom: 0; z-index: 10; }
         .sidebar-panel::-webkit-scrollbar { width: 5px; }
         .sidebar-panel::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); }
@@ -42,7 +50,8 @@
         @media print { .no-print { display: none !important; } .main-workspace-content { margin-left: 0 !important; padding: 0; } }
         @media (max-width: 992px) {
             .sidebar-panel { width: 70px; overflow-y: visible !important; }
-            .sidebar-link span, .sidebar-brand span, .sidebar-footer span, .sidebar-menu-list .role-section-label { display: none !important; }
+            .sidebar-link span, .sidebar-brand span, .sidebar-footer span, .sidebar-section-toggle .bi-chevron-right { display: none !important; }
+            .sidebar-submenu { padding-left: 0; }
             .main-workspace-content { margin-left: 70px; }
         }
     </style>
@@ -58,116 +67,73 @@
             </div>
             
             <ul class="sidebar-menu-list">
-                <!-- ── MODULE ZONE: EXECUTIVE CORE ── -->
                 <li class="sidebar-menu-item">
                     <a class="sidebar-link" href="{% url 'executive_kpis' %}">
-                        <i class="bi bi-speedometer2 text-white-50 fs-5"></i> <span>Executive Analytics</span>
+                        <i class="bi bi-speedometer2 text-white-50 fs-5"></i> <span>Dashboard</span>
                     </a>
                 </li>
-                
-                <div class="role-section-label text-white-50 small uppercase fw-bold px-3 pt-3 pb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Core Operations</div>
+                <li class="sidebar-menu-item">
+                    <a class="sidebar-link" href="{% url 'bursar_dashboard' %}">
+                        <i class="bi bi-bank text-white-50 fs-5"></i> <span>Finance</span>
+                    </a>
+                </li>
                 <li class="sidebar-menu-item">
                     <a class="sidebar-link" href="{% url 'student_registry' %}">
-                        <i class="bi bi-person-video3 text-white-50 fs-5"></i> <span>Learner Matrix</span>
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'staff_management_matrix' %}">
-                        <i class="bi bi-people-fill text-white-50 fs-5"></i> <span>Staff Directory</span>
+                        <i class="bi bi-person-video3 text-white-50 fs-5"></i> <span>Learners</span>
                     </a>
                 </li>
                 <li class="sidebar-menu-item">
                     <a class="sidebar-link" href="{% url 'attendance_deck' %}">
-                        <i class="bi bi-clock-history text-white-50 fs-5"></i> <span>Attendance Hub</span>
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'attendance_history' %}">
-                        <i class="bi bi-calendar-check text-white-50 fs-5"></i> <span>Attendance Reports</span>
+                        <i class="bi bi-clock-history text-white-50 fs-5"></i> <span>Attendance</span>
                     </a>
                 </li>
 
-                <!-- ── MODULE ZONE: TREASURY CONTROLS ── -->
-                <div class="role-section-label text-white-50 small uppercase fw-bold px-3 pt-3 pb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Treasury Controls</div>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'bursar_dashboard' %}">
-                        <i class="bi bi-bank text-white-50 fs-5"></i> <span>Finance Registry</span>
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'fee_structure' %}">
-                        <i class="bi bi-calendar-check text-white-50 fs-5"></i> <span>Fee Structure</span>
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'financial_analytics' %}">
-                        <i class="bi bi-graph-up-arrow text-white-50 fs-5"></i> <span>Financial Analytics</span>
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'finance_reports' %}">
-                        <i class="bi bi-file-earmark-spreadsheet text-white-50 fs-5"></i> <span>Reports & Export</span>
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'generate_bulk_invoices' %}">
-                        <i class="bi bi-plus-circle text-white-50 fs-5"></i> <span>Generate Invoices</span>
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'invoice_list' %}">
-                        <i class="bi bi-receipt text-white-50 fs-5"></i> <span>Invoices</span>
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'fee_defaulters_portal' %}">
-                        <i class="bi bi-envelope-exclamation text-white-50 fs-5"></i> <span>Defaulters SMS</span>
-                    </a>
-                </li>
+                <details class="sidebar-section">
+                    <summary class="sidebar-link sidebar-section-toggle">
+                        <i class="bi bi-cash-stack text-white-50 fs-5"></i> <span>Finance Tools</span> <i class="bi bi-chevron-right"></i>
+                    </summary>
+                    <ul class="sidebar-submenu">
+                        <li><a class="sidebar-link" href="{% url 'invoice_list' %}"><span>Invoices</span></a></li>
+                        <li><a class="sidebar-link" href="{% url 'fee_structure' %}"><span>Fee Structure</span></a></li>
+                        <li><a class="sidebar-link" href="{% url 'financial_analytics' %}"><span>Analytics</span></a></li>
+                        <li><a class="sidebar-link" href="{% url 'finance_reports' %}"><span>Reports</span></a></li>
+                        <li><a class="sidebar-link" href="{% url 'generate_bulk_invoices' %}"><span>Bulk Invoices</span></a></li>
+                        <li><a class="sidebar-link" href="{% url 'fee_defaulters_portal' %}"><span>Defaulters SMS</span></a></li>
+                    </ul>
+                </details>
 
-                <!-- ── MODULE ZONE: ACADEMICS ── -->
-                <div class="role-section-label text-white-50 small uppercase fw-bold px-3 pt-3 pb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Academic Workspace</div>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'academic_hub' %}">
-                        <i class="bi bi-book-half text-white-50 fs-5"></i> <span>Academic Hub</span>
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'marks_entry_portal' %}">
-                        <i class="bi bi-file-earmark-spreadsheet text-white-50 fs-5"></i> <span>Grading Desk</span>
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'post_homework' %}">
-                        <i class="bi bi-book-half text-white-50 fs-5"></i> <span>Post Homework</span>
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'teacher_sms_broadcast' %}">
-                        <i class="bi bi-chat-left-text text-white-50 fs-5"></i> <span>Parent SMS Broadcast</span>
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'academic_analytics' %}">
-                        <i class="bi bi-graph-up-arrow text-white-50 fs-5"></i> <span>Academic Analytics</span>
-                    </a>
-                </li>
+                <details class="sidebar-section">
+                    <summary class="sidebar-link sidebar-section-toggle">
+                        <i class="bi bi-people-fill text-white-50 fs-5"></i> <span>People</span> <i class="bi bi-chevron-right"></i>
+                    </summary>
+                    <ul class="sidebar-submenu">
+                        <li><a class="sidebar-link" href="{% url 'staff_management_matrix' %}"><span>Staff Directory</span></a></li>
+                        <li><a class="sidebar-link" href="{% url 'attendance_history' %}"><span>Attendance Reports</span></a></li>
+                    </ul>
+                </details>
 
-                <!-- ── MODULE ZONE: OPERATIONS ── -->
-                <div class="role-section-label text-white-50 small uppercase fw-bold px-3 pt-3 pb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Operations</div>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'grade_promotion' %}">
-                        <i class="bi bi-arrow-up-right-circle text-white-50 fs-5"></i> <span>Grade Promotion</span>
-                    </a>
-                </li>
+                <details class="sidebar-section">
+                    <summary class="sidebar-link sidebar-section-toggle">
+                        <i class="bi bi-book-half text-white-50 fs-5"></i> <span>Academics</span> <i class="bi bi-chevron-right"></i>
+                    </summary>
+                    <ul class="sidebar-submenu">
+                        <li><a class="sidebar-link" href="{% url 'academic_hub' %}"><span>Academic Hub</span></a></li>
+                        <li><a class="sidebar-link" href="{% url 'marks_entry_portal' %}"><span>Grading Desk</span></a></li>
+                        <li><a class="sidebar-link" href="{% url 'post_homework' %}"><span>Homework</span></a></li>
+                        <li><a class="sidebar-link" href="{% url 'academic_analytics' %}"><span>Analytics</span></a></li>
+                        <li><a class="sidebar-link" href="{% url 'teacher_sms_broadcast' %}"><span>Parent SMS</span></a></li>
+                    </ul>
+                </details>
 
-                <!-- ── MODULE ZONE: STORES ── -->
-                <div class="role-section-label text-white-50 small uppercase fw-bold px-3 pt-3 pb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Logistics Nodes</div>
-                <li class="sidebar-menu-item">
-                    <a class="sidebar-link" href="{% url 'inventory_deck' %}">
-                        <i class="bi bi-boxes text-white-50 fs-5"></i> <span>Inventory &amp; Assets</span>
-                    </a>
-                </li>
+                <details class="sidebar-section">
+                    <summary class="sidebar-link sidebar-section-toggle">
+                        <i class="bi bi-boxes text-white-50 fs-5"></i> <span>Operations</span> <i class="bi bi-chevron-right"></i>
+                    </summary>
+                    <ul class="sidebar-submenu">
+                        <li><a class="sidebar-link" href="{% url 'grade_promotion' %}"><span>Grade Promotion</span></a></li>
+                        <li><a class="sidebar-link" href="{% url 'inventory_deck' %}"><span>Inventory &amp; Assets</span></a></li>
+                    </ul>
+                </details>
             </ul>
             
             <div class="sidebar-footer">

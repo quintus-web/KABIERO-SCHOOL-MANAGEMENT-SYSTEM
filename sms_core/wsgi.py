@@ -23,13 +23,15 @@ if os.environ.get('RENDER'):
     try:
         from finance.models import Student, StaffProfile
         from django.contrib.auth.models import User
+        admin_username = os.environ.get('DEFAULT_ADMIN_USERNAME', 'admin')
+        admin_password = os.environ.get('DEFAULT_ADMIN_PASSWORD', 'sms_pass2026')
         user, _ = User.objects.get_or_create(
-            username='admin',
+            username=admin_username,
         )
         user.is_superuser = True
         user.is_staff = True
         user.is_active = True
-        user.set_password('sms_pass2026')
+        user.set_password(admin_password)
         user.save()
         logger.info("Render startup: admin user ensured")
         if Student.objects.count() == 0:

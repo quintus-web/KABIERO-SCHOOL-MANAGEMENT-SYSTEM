@@ -137,8 +137,10 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.WARNING("Data file not found, skipping student seed"))
 
+        admin_username = os.environ.get('DEFAULT_ADMIN_USERNAME', 'admin')
+        admin_password = os.environ.get('DEFAULT_ADMIN_PASSWORD', 'sms_pass2026')
         user, _ = User.objects.get_or_create(
-            username='admin',
+            username=admin_username,
             defaults={
                 'email': 'admin@admin.com'
             }
@@ -147,6 +149,6 @@ class Command(BaseCommand):
         user.is_staff = True
         user.is_active = True
         user.email = user.email or 'admin@admin.com'
-        user.set_password('sms_pass2026')
+        user.set_password(admin_password)
         user.save()
-        self.stdout.write(self.style.SUCCESS("Admin user ready (username: admin, password: sms_pass2026)"))
+        self.stdout.write(self.style.SUCCESS(f"Admin user ready (username: {admin_username})"))

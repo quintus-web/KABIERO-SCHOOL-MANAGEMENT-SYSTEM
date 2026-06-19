@@ -43,6 +43,25 @@ CORE_SUBJECTS = [
 VALID_GRADES = ["Playgroup", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
 
 
+def _default_admin_credentials():
+    return (
+        os.environ.get('DEFAULT_ADMIN_USERNAME', 'admin'),
+        os.environ.get('DEFAULT_ADMIN_PASSWORD', 'sms_pass2026'),
+    )
+
+
+def _ensure_default_admin_user():
+    username, password = _default_admin_credentials()
+    user, _ = User.objects.get_or_create(username=username)
+    user.is_superuser = True
+    user.is_staff = True
+    user.is_active = True
+    user.email = user.email or 'admin@admin.com'
+    user.set_password(password)
+    user.save()
+    return username, password
+
+
 def _get_subjects():
     if not Subject.objects.exists():
         Subject.objects.bulk_create([
@@ -1365,10 +1384,16 @@ def staff_login_view(request):
     role = request.GET.get("role", "Admin")
 
     if request.method == "POST":
+        username = request.POST.get("username", "").strip()
+        password = request.POST.get("password", "")
+        default_username, _ = _default_admin_credentials()
+        if username == default_username:
+            _ensure_default_admin_user()
+
         user = authenticate(
             request,
-            username=request.POST.get("username"),
-            password=request.POST.get("password")
+            username=username,
+            password=password
         )
         if user:
             login(request, user)
