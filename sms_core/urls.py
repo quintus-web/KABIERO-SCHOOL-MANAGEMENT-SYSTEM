@@ -1,11 +1,12 @@
 # sms_core/urls.py
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 from django.urls import path
 from finance import views
 
 def root_redirect(request):
     if request.user.is_authenticated:
-        return views.bursar_dashboard(request)
+        return redirect('bursar_dashboard')
     return redirect('staff_login')
 
 urlpatterns = [
