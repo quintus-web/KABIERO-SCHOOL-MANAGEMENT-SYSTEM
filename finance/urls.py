@@ -45,6 +45,7 @@ urlpatterns = [
     path('logistics/attendance-deck/', views.global_attendance_control_deck, name='attendance_deck'),
     path('attendance/daily-deck/', views.daily_attendance_deck, name='daily_attendance_deck'),
     path('attendance/commit-bulk-attendance/', views.commit_bulk_attendance, name='commit_bulk_attendance'),
+    path('attendance/history/', views.attendance_history_report, name='attendance_history'),
     path('logistics/inventory/', views.inventory_asset_control_deck, name='inventory_deck'),
 
     # 🎯 FIXED: Maps the modal onboarding form submission directly to the view function!
