@@ -55,6 +55,9 @@ urlpatterns = [
     path('registry/learners/<int:student_id>/edit/', views.edit_student_info, name='edit_student'),
     path('registry/learners/<int:student_id>/delete/', views.delete_student_record, name='delete_student'),
     path('registry/grade-promotion/', views.grade_promotion_dashboard, name='grade_promotion'),
+    path('registry/staff/add/', views.staff_create, name='staff_create'),
+    path('registry/staff/<int:staff_id>/edit/', views.staff_edit, name='staff_edit'),
+    path('registry/staff/leave/', views.leave_management, name='leave_management'),
     
     # ── REPORT HUB & EXPORT ENGINE ──
     path('reports/', views.finance_reports_hub, name='finance_reports'),
