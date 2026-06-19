@@ -345,6 +345,7 @@ def faculty_directory(request):
 # =========================================================
 
 @login_required
+@login_required
 def bursar_dashboard(request):
     try:
         search = request.GET.get("search", "").lower()
@@ -1548,7 +1549,6 @@ def generate_report_card_view(request, student_id):
 
 def parent_portal_gateway(request):
     """Securely authenticates parents and streams live records directly into the tabbed dashboard panels"""
-    from django import models
     if request.method == 'POST':
         phone_no = request.POST.get('parent_phone', '').strip()
         parent_id = request.POST.get('parent_id_number', '').strip()
@@ -1570,7 +1570,7 @@ def parent_portal_gateway(request):
             homework_list = HomeworkAssignment.objects.filter(stream=student.class_stream).select_related('subject')
             
             announcements = SchoolAnnouncement.objects.filter(
-                models.Q(target_audience='ALL_PARENTS') | models.Q(target_audience='ALL_STUDENTS')
+                Q(target_audience='ALL_PARENTS') | Q(target_audience='ALL_STUDENTS')
             ).order_by('-date_published')[:5]
             
             attendance_logs = student.attendance.all().order_by('-date')[:10] if hasattr(student, 'attendance') else []
@@ -1595,7 +1595,6 @@ def parent_portal_gateway(request):
 
 def global_attendance_control_deck(request):
     """Calculates overall metrics charts and triggers localized absence warning sheets"""
-    from django import models
     today = datetime.date.today()
     
     if request.method == 'POST' and 'toggle_attendance' in request.POST:

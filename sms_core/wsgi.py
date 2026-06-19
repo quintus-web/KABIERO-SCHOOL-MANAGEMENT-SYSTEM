@@ -21,7 +21,16 @@ application = get_wsgi_application()
 
 if os.environ.get('RENDER'):
     try:
-        from finance.models import Student
+        from finance.models import Student, StaffProfile
+        from django.contrib.auth.models import User
+        user, _ = User.objects.get_or_create(
+            username='admin',
+            defaults={'is_superuser': True, 'is_staff': True, 'is_active': True}
+        )
+        if user:
+            user.set_password('sms_pass2026')
+            user.save()
+            logger.info("Render startup: admin user ensured")
         if Student.objects.count() == 0:
             logger.info("Render startup: DB empty, running seed_data...")
             call_command('seed_data', verbosity=1)

@@ -14,12 +14,23 @@ if os.path.exists(env_file):
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-ypx*^vy2-%wj23lotuzn-ngd!jluip-*)^=vhq#%4dzsojhm2v')
 DEBUG = env.bool('DEBUG', default=False)
 
+def _csv_env(name, default=''):
+    return [item.strip() for item in os.environ.get(name, default).split(',') if item.strip()]
+
 if os.environ.get('RENDER'):
-    ALLOWED_HOSTS = [h.strip() for h in os.environ.get('RENDER_EXTERNAL_HOSTNAME', '').split(',') if h]
+    ALLOWED_HOSTS = _csv_env('RENDER_EXTERNAL_HOSTNAME')
 elif os.environ.get('DATABASE_URL'):
-    ALLOWED_HOSTS = ['0.0.0.0', '127.0.0.1', 'localhost']
+    ALLOWED_HOSTS = _csv_env('ALLOWED_HOSTS', '0.0.0.0,127.0.0.1,localhost')
 else:
     ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.50']
+
+ALLOWED_HOSTS += _csv_env('ALLOWED_HOSTS')
+ALLOWED_HOSTS = list(dict.fromkeys(ALLOWED_HOSTS))
+
+CSRF_TRUSTED_ORIGINS = _csv_env('CSRF_TRUSTED_ORIGINS')
+if os.environ.get('RENDER_EXTERNAL_HOSTNAME'):
+    CSRF_TRUSTED_ORIGINS.append(f"https://{os.environ['RENDER_EXTERNAL_HOSTNAME']}")
+CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(CSRF_TRUSTED_ORIGINS))
 
 DATABASES = {
     'default': dj_database_url.config(
@@ -90,3 +101,6 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 3600
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
