@@ -27,13 +27,13 @@
                 </tr>
             </thead>
             <tbody>
-                {% for level in levels %}
+                {% for row in rows %}
                 <tr class="border-bottom">
-                    <td class="ps-4 fw-bold text-dark">{{ level }}</td>
-                    <td class="text-center font-monospace fw-bold text-primary">{{ grouped[level].TERM_1|floatformat:0 }}</td>
-                    <td class="text-center font-monospace">{{ grouped[level].TERM_2|floatformat:0 }}</td>
-                    <td class="text-center font-monospace">{{ grouped[level].TERM_3|floatformat:0 }}</td>
-                    <td class="text-end pe-4 font-monospace fw-bold text-dark">{{ grouped[level].TERM_1|add:grouped[level].TERM_2|add:grouped[level].TERM_3|floatformat:0 }}</td>
+                    <td class="ps-4 fw-bold text-dark">{{ row.level }}</td>
+                    <td class="text-center font-monospace fw-bold text-primary">{{ row.term1|floatformat:0 }}</td>
+                    <td class="text-center font-monospace">{{ row.term2|floatformat:0 }}</td>
+                    <td class="text-center font-monospace">{{ row.term3|floatformat:0 }}</td>
+                    <td class="text-end pe-4 font-monospace fw-bold text-dark">{{ row.annual|floatformat:0 }}</td>
                 </tr>
                 {% empty %}
                 <tr>

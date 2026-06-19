@@ -23,7 +23,7 @@ from .models import (
     SchoolAsset, AssetMaintenanceLog,
     HomeworkAssignment, SchoolAnnouncement,
     LessonPlan, LearningMaterial, TimetableSlot,
-    DisciplineReport
+    DisciplineReport, LeaveApplication
 )
 from django.contrib.auth.models import User
 
@@ -431,18 +431,34 @@ def collect_fee_payment(request, student_id):
     student = get_object_or_404(Student, id=student_id)
 
     if request.method == "POST":
+        payment_type = request.POST.get("payment_type", "payment")
+
+        if payment_type == "balance":
+            try:
+                new_balance = Decimal(request.POST.get("opening_balance", 0))
+                student.current_balance = new_balance
+                student.save()
+                messages.success(request, f"Opening balance for {student.first_name} set to KES {new_balance:,.2f}.")
+            except Exception:
+                messages.error(request, "Invalid balance amount entered.")
+            return redirect("bursar_dashboard")
+
+        # --- standard payment ---
         amount = Decimal(request.POST.get("amount_paid", 0))
         if amount <= 0:
-            messages.error(request, "Invalid transactional processing parameter.")
+            messages.error(request, "Invalid payment amount.")
             return redirect(request.path)
+
+        channel = request.POST.get("payment_channel", "CASH")
+        description = request.POST.get("description", "School Fees Payment").strip() or "School Fees Payment"
 
         open_invoice = FeeInvoice.objects.filter(student=student).order_by('date_issued').first()
         if not open_invoice:
-            fee_entry = FeeStructure.objects.filter(level=student.class_stream.name).first()
+            fee_entry = FeeStructure.objects.filter(level=student.class_stream.name).first() if student.class_stream else None
             invoice_amount = fee_entry.amount if fee_entry else Decimal("0.00")
             open_invoice = FeeInvoice.objects.create(
                 student=student,
-                title=f"{student.class_stream.name} Term 1 Invoice 2026",
+                title=f"{student.class_stream.name if student.class_stream else 'Unassigned'} Term 1 Invoice 2026",
                 amount=invoice_amount,
                 description="Auto-generated from Crescent Heights Fee Structure 2026"
             )
@@ -452,13 +468,15 @@ def collect_fee_payment(request, student_id):
             invoice=open_invoice,
             amount=amount,
             status="COMPLETED",
-            reference_code=f"RCPT-{timezone.now().strftime('%Y%m%d%H%M%S')}"
+            payment_channel=channel,
+            description=description,
+            reference_code=f"RCPT-{timezone.now().strftime('%Y%m%d%H%M%S')}-{student.id}"
         )
 
-        student.current_balance = max(0, Decimal(student.current_balance) - amount)
+        student.current_balance = max(Decimal("0.00"), Decimal(student.current_balance) - amount)
         student.save()
 
-        messages.success(request, f"Payment trace of KSH {amount} successfully posted.")
+        messages.success(request, f"Payment of KES {amount:,.2f} posted via {channel}.")
         return redirect("bursar_dashboard")
 
     return render(request, "finance/receipt_form.html", {"student": student})
@@ -466,22 +484,27 @@ def collect_fee_payment(request, student_id):
 
 @login_required
 def fee_defaulters_portal(request):
+    defaulters_qs = Student.objects.filter(current_balance__gt=0, status='ACTIVE', is_active=True).select_related('class_stream').order_by('-current_balance')
+    defaulter_list = [{'student': s, 'balance': float(s.current_balance), 'parent_phone': s.parent_phone} for s in defaulters_qs]
     if request.method == "POST":
-        messages.success(request, "Outstanding debt notification arrays dispatched.")
-    return render(request, "finance/defaulters.html")
+        messages.success(request, f"Outstanding debt notification arrays dispatched to {len(defaulter_list)} account(s).")
+    return render(request, "finance/sms_portal.html", {'defaulters': defaulter_list})
 
 
 @login_required
 def fee_structure(request):
     schedules = FeeStructure.objects.all().order_by('level', 'term')
     levels = sorted(FeeStructure.objects.values_list('level', flat=True).distinct())
-    grouped = {}
-    for sched in schedules:
-        grouped.setdefault(sched.level, {})[sched.term] = sched.amount
-    return render(request, "finance/fee_structure.html", {
-        "grouped": grouped,
-        "levels": levels
-    })
+    rows = []
+    for level in levels:
+        t1 = FeeStructure.objects.filter(level=level, term='TERM_1').first()
+        t2 = FeeStructure.objects.filter(level=level, term='TERM_2').first()
+        t3 = FeeStructure.objects.filter(level=level, term='TERM_3').first()
+        a1 = float(t1.amount) if t1 else 0
+        a2 = float(t2.amount) if t2 else 0
+        a3 = float(t3.amount) if t3 else 0
+        rows.append({'level': level, 'term1': a1, 'term2': a2, 'term3': a3, 'annual': a1 + a2 + a3})
+    return render(request, "finance/fee_structure.html", {'rows': rows})
 
 
 @login_required
@@ -854,7 +877,10 @@ def finance_reports_hub(request):
         "report_type": report_type, "report_data": report_data, "report_title": report_title,
         "headers": headers, "levels": levels, "selected_level": level,
         "selected_term": term, "selected_year": year, "terms": ['TERM_1','TERM_2','TERM_3'],
-        "subjects": _get_subjects(), "current_page": "reports"
+        "subjects": _get_subjects(), "current_page": "reports",
+        "total_invoiced": sum(r.get('invoiced', 0) for r in report_data) if report_type == 'collection' else 0,
+        "total_collected": sum(r.get('collected', 0) for r in report_data) if report_type == 'collection' else 0,
+        "total_outstanding": sum(r.get('balance', 0) for r in report_data) if report_type == 'collection' else 0,
     })
 
 
@@ -1717,6 +1743,38 @@ def commit_bulk_attendance(request):
     if request.method == 'POST':
         messages.success(request, "Attendance records saved successfully.")
     return redirect('attendance_deck')
+
+
+@login_required
+def bulk_balance_import(request):
+    """Upload a CSV with columns: admission_number, balance to set opening balances in bulk."""
+    if request.method == "POST" and request.FILES.get("csv_file"):
+        import io
+        f = request.FILES["csv_file"]
+        decoded = f.read().decode("utf-8")
+        reader = csv.DictReader(io.StringIO(decoded))
+        updated = 0
+        errors = []
+        for row in reader:
+            adm = row.get("admission_number", "").strip()
+            bal = row.get("balance", "").strip()
+            if not adm or not bal:
+                continue
+            try:
+                student = Student.objects.get(admission_number=adm)
+                student.current_balance = Decimal(bal)
+                student.save()
+                updated += 1
+            except Student.DoesNotExist:
+                errors.append(adm)
+            except Exception:
+                errors.append(adm)
+        msg = f"Updated balances for {updated} student(s)."
+        if errors:
+            msg += f" Not found: {', '.join(errors[:10])}"
+        messages.success(request, msg)
+        return redirect("bursar_dashboard")
+    return render(request, "finance/bulk_balance_import.html")
 
 
 def add_new_student_onboarding(request):

@@ -227,6 +227,7 @@ class HomeworkAssignment(models.Model):
 class SchoolAnnouncement(models.Model):
     NOTICE_TARGETS = [
         ('ALL_PARENTS', 'All Parents'),
+        ('ALL_STUDENTS', 'All Students'),
         ('FORM_1', 'Form 1 Stream Blocks Only'),
         ('FORM_2', 'Form 2 Stream Blocks Only'),
     ]

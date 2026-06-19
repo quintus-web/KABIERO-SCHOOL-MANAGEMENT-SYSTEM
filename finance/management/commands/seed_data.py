@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from finance.models import Student, ClassStream, Subject, FeeStructure, FeeInvoice, StaffProfile
 
-VALID_GRADES = ["Playgroup", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
+VALID_GRADES = ["Day care", "Play Group", "PP1", "PP2", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"]
 
 
 def normalize_grade(raw_grade):

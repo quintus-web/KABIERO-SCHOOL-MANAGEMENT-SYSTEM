@@ -1,0 +1,47 @@
+{% extends 'finance/base.html' %}
+{% block title %}Bulk Balance Import - Crescent Heights Academy{% endblock %}
+{% block content %}
+<div class="container mt-4" style="max-width: 640px;">
+    <div class="mb-3">
+        <a href="{% url 'bursar_dashboard' %}" class="btn btn-sm btn-outline-secondary rounded-3">
+            <i class="bi bi-arrow-left"></i> Back to Accounts Directory
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm bg-white p-4" style="border-radius: 16px;">
+        <h5 class="fw-bold text-dark mb-1">Bulk Opening Balance Import</h5>
+        <p class="text-muted small mb-4">Upload a CSV file to set existing arrears balances for multiple students at once.</p>
+
+        {% if messages %}
+            {% for m in messages %}
+            <div class="alert alert-success small">{{ m }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="alert alert-info small mb-4">
+            <strong>CSV Format Required:</strong><br>
+            Two columns: <code>admission_number</code> and <code>balance</code><br>
+            Example row: <code>KAB/2026/001, 18000</code>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="form-label small fw-bold text-secondary text-uppercase mb-2" style="font-size:0.72rem;">Select CSV File</label>
+                <input type="file" name="csv_file" accept=".csv" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-dark btn-lg w-100 fw-bold" style="border-radius:12px; height:52px;">
+                <i class="bi bi-upload me-2"></i> Import Balances
+            </button>
+        </form>
+
+        <hr class="my-4">
+        <p class="text-muted small mb-2 fw-semibold">Don't have a CSV? Download a template:</p>
+        <a href="data:text/csv;charset=utf-8,admission_number%2Cbalance%0AKAB%2F2026%2F001%2C18000%0AKAB%2F2026%2F002%2C15000"
+           download="balance_import_template.csv"
+           class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-download me-1"></i> Download Template
+        </a>
+    </div>
+</div>
+{% endblock %}
