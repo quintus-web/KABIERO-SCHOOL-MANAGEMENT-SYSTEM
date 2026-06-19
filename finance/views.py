@@ -345,33 +345,23 @@ def faculty_directory(request):
 # =========================================================
 
 @login_required
-@login_required
 def bursar_dashboard(request):
-    try:
-        search = request.GET.get("search", "").lower()
-        students = Student.objects.all().order_by('admission_number')
+    search = request.GET.get("search", "").lower()
+    students = Student.objects.all().order_by('admission_number')
 
-        if search:
-            students = students.filter(
-                Q(first_name__icontains=search) |
-                Q(last_name__icontains=search) |
-                Q(admission_number__icontains=search)
-            )
+    if search:
+        students = students.filter(
+            Q(first_name__icontains=search) |
+            Q(last_name__icontains=search) |
+            Q(admission_number__icontains=search)
+        )
 
-        students = students.select_related('class_stream')
+    students = students.select_related('class_stream')
 
-        return render(request, "finance/bursar_dashboard.html", {
-            "students": students,
-            "search_query": search
-        })
-    except Exception as e:
-        import traceback
-        # Log the error for debugging
-        from django.conf import settings
-        if settings.DEBUG:
-            raise
-        messages.error(request, f"System error occurred. Please try again.")
-        return redirect('public_home')
+    return render(request, "finance/bursar_dashboard.html", {
+        "students": students,
+        "search_query": search
+    })
 
 
 @login_required
