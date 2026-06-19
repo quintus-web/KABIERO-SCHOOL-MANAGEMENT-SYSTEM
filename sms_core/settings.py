@@ -12,7 +12,7 @@ if os.path.exists(env_file):
     environ.Env.read_env(env_file)
 
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-ypx*^vy2-%wj23lotuzn-ngd!jluip-*)^=vhq#%4dzsojhm2v')
-DEBUG = env.bool('DEBUG', default=False)
+DEBUG = env.bool('DEBUG', default=True)
 
 def _csv_env(name, default=''):
     return [item.strip() for item in os.environ.get(name, default).split(',') if item.strip()]
@@ -102,3 +102,24 @@ CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SECURE = bool(RENDER_HOSTNAME)
 SESSION_COOKIE_SECURE = bool(RENDER_HOSTNAME)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'ERROR',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}
