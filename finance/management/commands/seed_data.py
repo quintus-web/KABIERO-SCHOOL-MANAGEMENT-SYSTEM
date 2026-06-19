@@ -140,12 +140,13 @@ class Command(BaseCommand):
         user, _ = User.objects.get_or_create(
             username='admin',
             defaults={
-                'is_superuser': True,
-                'is_staff': True,
-                'is_active': True,
                 'email': 'admin@admin.com'
             }
         )
+        user.is_superuser = True
+        user.is_staff = True
+        user.is_active = True
+        user.email = user.email or 'admin@admin.com'
         user.set_password('sms_pass2026')
         user.save()
-        self.stdout.write(self.style.SUCCESS("Created admin user (username: admin, password: sms_pass2026)"))
+        self.stdout.write(self.style.SUCCESS("Admin user ready (username: admin, password: sms_pass2026)"))
