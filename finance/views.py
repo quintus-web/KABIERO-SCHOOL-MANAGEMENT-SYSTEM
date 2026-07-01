@@ -1634,38 +1634,39 @@ def parent_portal_gateway(request):
     return render(request, 'finance/parent_gateway_login.html')
 
 
+@login_required
 def global_attendance_control_deck(request):
     """Calculates overall metrics charts and triggers localized absence warning sheets"""
     today = datetime.date.today()
-    
+
+    students = Student.objects.filter(is_active=True)
+    staff_members = StaffProfile.objects.all()
+
+    for s in students:
+        StudentAttendanceRecord.objects.get_or_create(student=s, date=today, defaults={'status': 'PRESENT', 'is_present': True})
+    for st in staff_members:
+        TeacherAttendanceRecord.objects.get_or_create(staff=st, date=today, defaults={'status': 'PRESENT', 'time_in': datetime.time(7, 45)})
+
     if request.method == 'POST' and 'toggle_attendance' in request.POST:
         try:
             record_id = request.POST.get('record_id')
             record_type = request.POST.get('type')
             new_status = request.POST.get('new_status')
-            
+
             if record_type == 'STUDENT':
-                rec = StudentAttendanceRecord.objects.get(id=record_id)
+                rec = StudentAttendanceRecord.objects.get(id=record_id, date=today)
                 rec.status = new_status
                 rec.is_present = (new_status == 'PRESENT')
-                rec.save()
+                rec.save(update_fields=['status', 'is_present'])
                 if new_status == 'ABSENT':
                     messages.warning(request, f"SMS alert staged for parent of {rec.student.first_name} ({rec.student.parent_phone})")
             elif record_type == 'TEACHER':
-                rec = TeacherAttendanceRecord.objects.get(id=record_id)
+                rec = TeacherAttendanceRecord.objects.get(id=record_id, date=today)
                 rec.status = new_status
-                rec.save()
+                rec.save(update_fields=['status'])
             return redirect('attendance_deck')
         except (StudentAttendanceRecord.DoesNotExist, TeacherAttendanceRecord.DoesNotExist):
-            messages.error(request, "Record not found.")
-    
-    students = Student.objects.filter(is_active=True)
-    staff_members = StaffProfile.objects.all()
-    
-    for s in students:
-        StudentAttendanceRecord.objects.get_or_create(student=s, date=today, defaults={'status': 'PRESENT'})
-    for st in staff_members:
-        TeacherAttendanceRecord.objects.get_or_create(staff=st, date=today, defaults={'status': 'PRESENT', 'time_in': datetime.time(7, 45)})
+            messages.error(request, "Record not found. Please refresh and try again.")
     
     context = {
         'today': today,

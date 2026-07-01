@@ -1,82 +1,92 @@
 {% extends 'finance/base.html' %}
 
-{% block title %}Accounts Registry Directory - Crescent Heights Academy{% endblock %}
+{% block title %}Fee Ledger - Crescent Heights Academy{% endblock %}
 
 {% block content %}
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+<div class="page-header d-flex flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
     <div>
-        <h3 class="fw-bold text-dark mb-1">Financial Directory System</h3>
-        <p class="text-muted small text-uppercase fw-semibold mb-0">Real-Time Student Fee Ledger Directory Index</p>
+        <h3 class="fw-bold text-dark mb-0">Fee Ledger</h3>
+        <p class="text-muted small fw-semibold mb-0" style="font-size:0.72rem;">STUDENT FEE DIRECTORY</p>
     </div>
-    
-    <a href="{% url 'financial_analytics' %}" class="btn btn-dark px-4 fw-semibold">
-        <i class="bi bi-graph-up me-1"></i> Financial Analytics
-    </a>
-    <a href="{% url 'bulk_balance_import' %}" class="btn btn-outline-dark px-4 fw-semibold">
-        <i class="bi bi-upload me-1"></i> Import Balances
-    </a>
-
-    <form method="GET" action="" class="d-flex gap-2 w-100 style-search-form" style="max-width: 400px;">
-        <div class="input-group">
-            <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
-            <input type="text" name="search" class="form-control border-start-0 ps-0" placeholder="Search name or admission number..." value="{{ search_query|default:'' }}" autocomplete="off">
-        </div>
-        {% if search_query %}
-            <a href="{% url 'bursar_dashboard' %}" class="btn btn-light border"><i class="bi bi-x-lg"></i></a>
-        {% endif %}
-        <button type="submit" class="btn btn-dark px-4 fw-semibold">Query</button>
-    </form>
+    <div class="header-actions">
+        <a href="{% url 'financial_analytics' %}" class="btn btn-dark fw-semibold"><i class="bi bi-graph-up me-1"></i>Analytics</a>
+        <a href="{% url 'bulk_balance_import' %}" class="btn btn-outline-dark fw-semibold"><i class="bi bi-upload me-1"></i>Import</a>
+    </div>
 </div>
 
-<div class="card card-custom">
+<form method="GET" class="mb-3">
+    <div class="input-group">
+        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+        <input type="text" name="search" class="form-control border-start-0" placeholder="Search name or admission no..." value="{{ search_query|default:'' }}" autocomplete="off">
+        {% if search_query %}<a href="{% url 'bursar_dashboard' %}" class="btn btn-light border"><i class="bi bi-x-lg"></i></a>{% endif %}
+        <button type="submit" class="btn btn-dark fw-semibold px-3">Search</button>
+    </div>
+</form>
+
+<!-- DESKTOP TABLE -->
+<div class="card card-custom desktop-table">
     <div class="table-responsive">
-        <table class="table table-custom table-hover align-middle mb-0">
-            <thead>
+        <table class="table table-hover align-middle mb-0" style="font-size:0.88rem;">
+            <thead class="table-light fw-bold" style="font-size:0.73rem;">
                 <tr>
                     <th class="ps-4">Adm</th>
-                    <th>Student Full Name</th>
-                    <th>Class Stream Allocation</th>
-                    <th class="text-end">Current Ledger Balance</th>
-                    <th class="text-center" style="width: 240px;">Available Actions</th>
+                    <th>Student Name</th>
+                    <th>Stream</th>
+                    <th class="text-end">Balance</th>
+                    <th class="text-center">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in students %}
                 <tr class="border-bottom">
-                    <td class="ps-4"><code class="fw-bold font-monospace text-secondary">{{ item.admission_number }}</code></td>
-                    <td>
-                        <span class="fw-semibold text-dark d-block" style="color: #0f172a;">{{ item.first_name }} {{ item.last_name }}</span>
-                    </td>
-                    <td><span class="badge bg-light text-dark border px-2.5 py-1.5 rounded-3 fw-medium small">{% if item.class_stream %}{{ item.class_stream.name }}{% else %}Unassigned{% endif %}</span></td>
+                    <td class="ps-4"><code class="fw-bold text-secondary">{{ item.admission_number }}</code></td>
+                    <td><span class="fw-semibold text-dark">{{ item.first_name }} {{ item.last_name }}</span></td>
+                    <td><span class="badge bg-light text-dark border">{% if item.class_stream %}{{ item.class_stream.name }}{% else %}Unassigned{% endif %}</span></td>
                     <td class="text-end fw-bold">
-                        {% if item.current_balance > 0 %}
-                            <span class="text-danger">KES {{ item.current_balance|floatformat:2 }}</span>
-                        {% else %}
-                            <span class="text-success"><i class="bi bi-check-circle-fill me-1 small"></i> Cleared Ledger</span>
-                        {% endif %}
+                        {% if item.current_balance > 0 %}<span class="text-danger">KES {{ item.current_balance|floatformat:2 }}</span>
+                        {% else %}<span class="text-success"><i class="bi bi-check-circle-fill me-1 small"></i>Cleared</span>{% endif %}
                     </td>
-                    <td class="text-center py-3">
+                    <td class="text-center">
                         <div class="d-flex justify-content-center gap-2">
-                            <a href="{% url 'student_statement' item.id %}" class="btn btn-outline-secondary btn-sm rounded-3 px-3 d-inline-flex align-items-center gap-1 fw-medium"><i class="bi bi-file-earmark-text"></i> Audit Ledger</a>
-                            <a href="{% url 'collect_fee_payment' item.id %}" class="btn btn-sm btn-success rounded-pill d-inline-flex align-items-center">
-                                <i class="bi bi-cash-coin me-1"></i> Collect Fees
-                            </a>
+                            <a href="{% url 'student_statement' item.id %}" class="btn btn-outline-secondary btn-sm fw-medium"><i class="bi bi-file-earmark-text"></i> Statement</a>
+                            <a href="{% url 'collect_fee_payment' item.id %}" class="btn btn-sm btn-success"><i class="bi bi-cash-coin me-1"></i>Collect</a>
                         </div>
                     </td>
                 </tr>
                 {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center py-5 text-muted">
-                        <div class="py-4">
-                            <i class="bi bi-database-exclamation text-muted mb-3 d-block" style="font-size: 3rem;"></i>
-                            <h5 class="fw-bold text-dark mb-1">No Student Match Files Located</h5>
-                            <p class="text-muted small mx-auto mb-0" style="max-width: 350px;">Verify your text criteria search queries or add additional entries within your dashboard database portal profiles registry.</p>
-                        </div>
-                    </td>
-                </tr>
+                <tr><td colspan="5" class="text-center py-5 text-muted">No students found.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+</div>
+
+<!-- MOBILE CARD LIST -->
+<div class="mobile-card-list" style="display:none;">
+    {% for item in students %}
+    <div class="card border-0 shadow-sm mb-2 p-3">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+                <div class="fw-bold text-dark" style="font-size:0.92rem;">{{ item.first_name }} {{ item.last_name }}</div>
+                <code class="text-secondary" style="font-size:0.75rem;">{{ item.admission_number }}</code>
+                <div><span class="badge bg-light text-dark border mt-1" style="font-size:0.7rem;">{% if item.class_stream %}{{ item.class_stream.name }}{% else %}Unassigned{% endif %}</span></div>
+            </div>
+            <div class="text-end">
+                {% if item.current_balance > 0 %}
+                    <div class="fw-bold text-danger" style="font-size:0.9rem;">KES {{ item.current_balance|floatformat:2 }}</div>
+                    <div class="text-muted" style="font-size:0.7rem;">Outstanding</div>
+                {% else %}
+                    <div class="fw-bold text-success" style="font-size:0.85rem;"><i class="bi bi-check-circle-fill me-1"></i>Cleared</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'student_statement' item.id %}" class="btn btn-sm btn-outline-secondary fw-medium flex-fill"><i class="bi bi-file-earmark-text me-1"></i>Statement</a>
+            <a href="{% url 'collect_fee_payment' item.id %}" class="btn btn-sm btn-success fw-semibold flex-fill"><i class="bi bi-cash-coin me-1"></i>Collect</a>
+        </div>
+    </div>
+    {% empty %}
+    <p class="text-center text-muted py-4">No students found.</p>
+    {% endfor %}
 </div>
 {% endblock %}

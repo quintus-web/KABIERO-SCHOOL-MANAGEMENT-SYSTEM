@@ -1,111 +1,113 @@
 {% extends 'finance/base.html' %}
 
-{% block title %}Learner Registry Matrix - Crescent Heights Academy{% endblock %}
+{% block title %}Learner Registry - Crescent Heights Academy{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+<div class="page-header d-flex flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
     <div>
-        <h3 class="fw-bold text-dark mb-1" style="letter-spacing: -0.02em;">Learner Registry Matrix</h3>
-        <p class="text-muted small text-uppercase fw-semibold mb-0" style="letter-spacing: 0.05em; font-size: 0.72rem;">Official Student Enrollment and Demographic Directory</p>
+        <h3 class="fw-bold text-dark mb-0">Learner Registry</h3>
+        <p class="text-muted small fw-semibold mb-0" style="font-size:0.72rem;">STUDENT ENROLLMENT & DEMOGRAPHIC DIRECTORY</p>
     </div>
-    
-    <button type="button" class="btn btn-primary px-4 fw-bold rounded-3 shadow-sm d-inline-flex align-items-center gap-2" style="border-radius: 12px; height: 46px;" data-bs-toggle="modal" data-bs-target="#enrollmentModal">
-        <i class="bi bi-person-plus-fill fs-5"></i> Enroll New Student
+    <button type="button" class="btn btn-primary fw-bold rounded-3 d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#enrollmentModal">
+        <i class="bi bi-person-plus-fill"></i> <span>Enroll Student</span>
     </button>
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: 14px; border-left: 4px solid #2563eb !important;">
-            <span class="text-muted small text-uppercase fw-bold" style="font-size: 0.68rem; letter-spacing: 0.05em;">Total Registered Learners</span>
-            <h3 class="fw-bold text-dark mt-1 mb-0" style="letter-spacing: -0.02em;">{{ students|length }}</h3>
+<div class="row g-2 mb-3">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm p-3" style="border-left:4px solid #2563eb;">
+            <span class="text-muted fw-bold" style="font-size:0.68rem;">TOTAL LEARNERS</span>
+            <h3 class="fw-bold text-dark mt-1 mb-0">{{ students|length }}</h3>
         </div>
     </div>
 </div>
 
-<div class="card border-0 shadow-sm bg-white" style="border-radius: 16px; overflow: hidden;">
+<!-- DESKTOP TABLE -->
+<div class="card border-0 shadow-sm bg-white desktop-table" style="border-radius:16px;overflow:hidden;">
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light text-secondary small uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.02em;">
+        <table class="table table-hover align-middle mb-0" style="font-size:0.88rem;">
+            <thead class="table-light text-secondary fw-bold" style="font-size:0.73rem;">
                 <tr>
-                    <th class="ps-4 py-3" style="width: 15%;">Admission No.</th>
-                    <th style="width: 25%;">Full Name</th>
-                    <th style="width: 10%;">Gender</th>
-                    <th style="width: 15%;">Stream Assignment</th>
-                    <th style="width: 20%;">Guardian Details</th>
-                    <th class="text-center" style="width: 15%;">Action Control Desk</th>
+                    <th class="ps-4">Adm No.</th>
+                    <th>Full Name</th>
+                    <th>Gender</th>
+                    <th>Stream</th>
+                    <th>Guardian</th>
+                    <th class="text-center">Actions</th>
                 </tr>
             </thead>
-            <tbody style="font-size: 0.88rem;">
+            <tbody>
                 {% for student in students %}
-                <tr class="border-bottom" style="transition: background-color 0.15s ease;">
-                    <td class="ps-4">
-                        <code class="fw-bold text-primary font-monospace px-2 py-1 rounded bg-primary-subtle" style="font-size: 0.8rem;">{{ student.admission_number }}</code>
-                    </td>
+                <tr class="border-bottom">
+                    <td class="ps-4"><code class="fw-bold text-primary" style="font-size:0.8rem;">{{ student.admission_number }}</code></td>
                     <td>
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="avatar-placeholder text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold text-uppercase" style="width: 38px; height: 38px; font-size: 0.82rem; background-color: #eff6ff; border: 1px solid #dbeafe;">
-                                {{ student.first_name|slice:":1" }}{% if student.last_name %}{{ student.last_name|slice:":1" }}{% endif %}
-                            </div>
-                            <div>
-                                <span class="fw-bold text-dark d-block" style="color: #0f172a;">{{ student.first_name }} {{ student.last_name }}</span>
-                                <span class="text-muted font-monospace d-block" style="font-size: 0.72rem;">DB REF: #{{ student.id }}</span>
-                            </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-uppercase text-primary" style="width:36px;height:36px;font-size:0.8rem;background:#eff6ff;border:1px solid #dbeafe;flex-shrink:0;">{{ student.first_name|slice:":1" }}{{ student.last_name|slice:":1" }}</div>
+                            <span class="fw-bold text-dark">{{ student.first_name }} {{ student.last_name }}</span>
                         </div>
                     </td>
                     <td>
-                        {% if student.gender == 'M' or student.gender == 'Male' %}
-                            <span class="badge px-2.5 py-1 rounded-pill fw-semibold" style="background-color: #eff6ff; color: #2563eb; font-size: 0.75rem;">Boy</span>
-                        {% else %}
-                            <span class="badge px-2.5 py-1 rounded-pill fw-semibold" style="background-color: #fdf2f8; color: #db2777; font-size: 0.75rem;">Girl</span>
-                        {% endif %}
+                        {% if student.gender == 'M' %}<span class="badge rounded-pill fw-semibold" style="background:#eff6ff;color:#2563eb;">Boy</span>
+                        {% else %}<span class="badge rounded-pill fw-semibold" style="background:#fdf2f8;color:#db2777;">Girl</span>{% endif %}
                     </td>
+                    <td><span class="badge bg-light text-dark border">{{ student.class_stream.name|default:"Unassigned" }}</span></td>
                     <td>
-                        <span class="badge bg-light text-dark border px-2.5 py-1 rounded-3 fw-semibold" style="font-size: 0.78rem;">
-                            {{ student.class_stream.name|default:"Unassigned Block" }}
-                        </span>
+                        <span class="fw-bold text-dark d-block" style="font-size:0.85rem;">{{ student.guardian_name }}</span>
+                        <span class="text-muted" style="font-size:0.75rem;"><i class="bi bi-telephone-fill me-1"></i>{{ student.parent_phone }}</span>
                     </td>
-                    <td>
-                        <span class="d-block small fw-bold text-dark">{{ student.guardian_name }}</span>
-                        <span class="text-muted font-monospace d-block" style="font-size: 0.78rem;">
-                            <i class="bi bi-telephone-fill me-1 text-secondary" style="font-size: 0.7rem;"></i>{{ student.parent_phone }}
-                        </span>
-                    </td>
-                    <td class="text-center pe-3">
-                        <div class="btn-group btn-group-sm rounded-3 shadow-sm" role="group" style="overflow: hidden;">
-                            <a href="{% url 'student_profile' student.id %}" class="btn btn-white border border-end-0 text-dark fw-semibold px-2.5 py-2" title="View Folder">
-                                <i class="bi bi-folder2-open text-primary me-1"></i> View
-                            </a>
-                            
-                            <a href="{% url 'edit_student' student.id %}" class="btn btn-white border border-end-0 text-dark fw-semibold px-2.5 py-2" title="Modify Student">
-                                <i class="bi bi-pencil-square text-warning me-1"></i> Edit
-                            </a>
-                            
-                            <form method="POST" action="{% url 'delete_student' student.id %}" class="d-inline mb-0" onsubmit="return confirm('⚠️ WARNING: Permanent Purge Operation. Are you completely sure you want to delete {{ student.first_name }} {{ student.last_name }} from the on-premises database framework?');">
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'student_profile' student.id %}" class="btn btn-white border fw-semibold"><i class="bi bi-folder2-open text-primary me-1"></i>View</a>
+                            <a href="{% url 'edit_student' student.id %}" class="btn btn-white border fw-semibold"><i class="bi bi-pencil-square text-warning me-1"></i>Edit</a>
+                            <form method="POST" action="{% url 'delete_student' student.id %}" class="d-inline mb-0" onsubmit="return confirm('Delete {{ student.first_name }} {{ student.last_name }}?');">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-white border text-dark fw-semibold px-2.5 py-2 rounded-0" title="Purge Record">
-                                    <i class="bi bi-trash3-fill text-danger me-1"></i> Delete
-                                </button>
+                                <button type="submit" class="btn btn-white border fw-semibold rounded-0"><i class="bi bi-trash3-fill text-danger me-1"></i>Delete</button>
                             </form>
                         </div>
                     </td>
                 </tr>
                 {% empty %}
-                <tr>
-                    <td colspan="6" class="text-center py-5 text-muted">
-                        <div class="py-4">
-                            <i class="bi bi-people-fill text-muted mb-3 d-block" style="font-size: 3rem; color: #cbd5e1 !important;"></i>
-                            <h5 class="fw-bold text-dark mb-1">Registry Workspace Empty</h5>
-                            <p class="text-muted small mx-auto mb-0" style="max-width: 400px;">
-                                No student records have been initialized into the relational engine tables yet. Run your database seed script or click the enroll button above.
-                            </p>
-                        </div>
-                    </td>
-                </tr>
+                <tr><td colspan="6" class="text-center py-5 text-muted">No students enrolled yet.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+</div>
+
+<!-- MOBILE CARD LIST -->
+<div class="mobile-card-list" style="display:none;">
+    {% for student in students %}
+    <div class="card border-0 shadow-sm mb-2 p-3">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-uppercase text-primary" style="width:38px;height:38px;font-size:0.82rem;background:#eff6ff;border:1px solid #dbeafe;flex-shrink:0;">{{ student.first_name|slice:":1" }}{{ student.last_name|slice:":1" }}</div>
+                <div>
+                    <div class="fw-bold text-dark" style="font-size:0.92rem;">{{ student.first_name }} {{ student.last_name }}</div>
+                    <code class="text-primary" style="font-size:0.75rem;">{{ student.admission_number }}</code>
+                </div>
+            </div>
+            <span class="badge bg-light text-dark border" style="font-size:0.7rem;">{{ student.class_stream.name|default:"—" }}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+                <div class="text-muted" style="font-size:0.78rem;"><i class="bi bi-person me-1"></i>{{ student.guardian_name }}</div>
+                <div class="text-muted" style="font-size:0.78rem;"><i class="bi bi-telephone me-1"></i>{{ student.parent_phone }}</div>
+            </div>
+            {% if student.gender == 'M' %}<span class="badge rounded-pill" style="background:#eff6ff;color:#2563eb;">Boy</span>
+            {% else %}<span class="badge rounded-pill" style="background:#fdf2f8;color:#db2777;">Girl</span>{% endif %}
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'student_profile' student.id %}" class="btn btn-sm btn-outline-primary fw-semibold flex-fill"><i class="bi bi-folder2-open me-1"></i>View</a>
+            <a href="{% url 'edit_student' student.id %}" class="btn btn-sm btn-outline-warning fw-semibold flex-fill"><i class="bi bi-pencil-square me-1"></i>Edit</a>
+            <form method="POST" action="{% url 'delete_student' student.id %}" class="flex-fill mb-0" onsubmit="return confirm('Delete {{ student.first_name }}?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger fw-semibold w-100"><i class="bi bi-trash3-fill me-1"></i>Delete</button>
+            </form>
+        </div>
+    </div>
+    {% empty %}
+    <p class="text-center text-muted py-4">No students enrolled yet.</p>
+    {% endfor %}
 </div>
 
 <div class="modal fade" id="enrollmentModal" tabindex="-1" aria-labelledby="enrollmentModalLabel" aria-hidden="true">
